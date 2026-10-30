@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Carrera a la Ruleta</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;600&family=Big+Shoulders+Display:wght@800&family=Playfair+Display:wght@700;900&family=Source+Serif+4:wght@400;600&display=swap">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <h1 class="brand">Ruleta Futbolística</h1>
+    <div class="tools">
+      <button class="chip" id="t-sound" type="button" aria-pressed="true">Sonido: sí</button>
+      <button class="chip" id="t-fast" type="button" aria-pressed="false">Giro: normal</button>
+      <button class="chip" id="t-new" type="button" hidden>Nueva carrera</button>
+    </div>
+  </header>
+
+  <div id="news" class="news-bg" role="dialog" aria-modal="true" aria-labelledby="news-h" hidden>
+  <article class="paper">
+    <header class="paper-head">
+      <p class="paper-name" id="news-paper"></p>
+      <p class="paper-date"><span id="news-date"></span><span class="paper-tag" id="news-tag" hidden>Edición extra</span></p>
+    </header>
+    <h2 class="paper-h" id="news-h"></h2>
+    <p class="paper-d" id="news-d"></p>
+    <p class="paper-b" id="news-b"></p>
+    <p class="paper-fx" id="news-fx" hidden></p>
+    <button class="btn" id="news-close" type="button">Cerrar</button>
+  </article>
+</div>
+
+<div id="confirm" class="confirm" role="alertdialog" aria-labelledby="confirm-msg" hidden>
+    <p id="confirm-msg"></p>
+    <div class="row"><button class="btn small" id="confirm-yes" type="button">Sí, confirmar</button><button class="btn small ghost" id="confirm-no" type="button">Cancelar</button></div>
+  </div>
+
+  <section id="s-create">
+    <svg class="pitch" viewBox="0 0 400 120" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="396" height="116" rx="2"/><line x1="200" y1="2" x2="200" y2="118"/><circle cx="200" cy="60" r="26"/><circle cx="200" cy="60" r="2.5" fill="currentColor"/><rect x="2" y="30" width="48" height="60"/><rect x="2" y="46" width="18" height="28"/><rect x="350" y="30" width="48" height="60"/><rect x="380" y="46" width="18" height="28"/></svg>
+    <h2 class="hero">Arrancás a los 16.<br>La ruleta decide el resto.</h2>
+    <p class="lede">Tu media, tus goles, tus atajadas y tus contratos salen de girar. La carrera termina el día que dejan de llegar ofertas, tengas la edad que tengas.</p>
+    <form id="f-create" class="form" novalidate>
+      <label for="in-name">Nombre del jugador<input id="in-name" type="text" maxlength="24" autocomplete="off" placeholder="Ej: Tomás Rivera"></label>
+      <label for="in-nat">Nacionalidad<select id="in-nat"></select></label>
+      <fieldset><legend>Posición</legend>
+        <div class="seg">
+          <label class="opt"><input type="radio" name="pos" value="POR"><span>Arquero</span></label>
+          <label class="opt"><input type="radio" name="pos" value="DEF"><span>Defensor</span></label>
+          <label class="opt"><input type="radio" name="pos" value="MED"><span>Mediocampista</span></label>
+          <label class="opt"><input type="radio" name="pos" value="DEL" checked><span>Delantero</span></label>
+        </div>
+      </fieldset>
+      <label for="in-country">País donde empezás a jugar<select id="in-country"></select></label>
+      <label for="in-club">Club<select id="in-club"></select></label>
+      <p class="note">Cuanto más grande el club, más difícil es ganarse un lugar a los 16.</p>
+      <p class="err" id="err" role="alert"></p>
+      <button class="btn" type="submit">Firmar y debutar</button>
+    </form>
+  </section>
+
+  <section id="s-game" hidden>
+    <div class="player">
+      <div><h2 id="p-name"></h2><p class="sub" id="p-sub"></p></div>
+      <dl class="pl-stats">
+        <div><dt>Edad</dt><dd id="p-age"></dd></div>
+        <div><dt>Media</dt><dd id="p-ovr" class="big"></dd></div>
+      </dl>
+    </div>
+    <p class="club-line" id="p-club"></p>
+    <p class="note" id="p-extra"></p>
+
+    <div class="stage">
+      <p class="eyebrow" id="st-eyebrow"></p>
+      <h3 id="st-title"></h3>
+      <p class="hint" id="st-hint"></p>
+      <div class="wheel-wrap" id="wheel-wrap"><div class="pointer"></div><canvas id="wheel" role="img" aria-label="Ruleta"></canvas></div>
+      <div id="offers" hidden></div>
+      <div class="mini-wrap" id="mini-wrap" hidden>
+        <canvas id="mini" role="img" aria-label="Minijuego del partido clave"></canvas>
+        <div class="mini-ui" id="mini-ui" hidden><button class="btn small ghost" type="button" data-z="0">Izquierda</button><button class="btn small ghost" type="button" data-z="1">Centro</button><button class="btn small ghost" type="button" data-z="2">Derecha</button></div>
+      </div>
+      <p class="result" id="result" aria-live="polite"></p>
+      <div class="ntbox" id="nt-box" hidden><p class="eyebrow" id="nt-title"></p><ol class="ntlog" id="nt-log"></ol></div>
+      <div class="actions"><button class="btn" id="b-main" type="button"></button><button class="btn ghost" id="b-retry" type="button" hidden>Girar de nuevo</button><button class="btn ghost" id="b-retire" type="button">Retirarme</button></div>
+      <p class="note" id="rs-note"></p>
+    </div>
+
+    <dl class="totals" id="totals"></dl>
+    <div id="vit" class="vitwrap" hidden><h3 class="sec">Vitrina</h3><ul class="vit" id="vit-list"></ul></div>
+    <h3 class="sec">Historial</h3>
+    <div class="tablewrap"><table id="hist"></table></div>
+  </section>
+
+  <section id="s-end" hidden>
+    <p class="eyebrow">Fin de carrera</p>
+    <h2 class="hero" id="e-title"></h2>
+    <p class="lede" id="e-reason"></p>
+    <p class="verdict" id="e-verdict"></p>
+    <dl class="totals" id="e-totals"></dl>
+    <div id="e-vitwrap" class="vitwrap" hidden><h3 class="sec">Vitrina</h3><ul class="vit" id="e-vit"></ul></div>
+    <div class="tablewrap"><table id="e-hist"></table></div>
+    <div class="actions" style="justify-content:flex-start"><button class="btn" id="e-copy" type="button">Copiar resumen</button><button class="btn ghost" id="e-new" type="button">Nueva carrera</button></div>
+    <textarea id="e-text" readonly rows="8" hidden aria-label="Resumen de la carrera"></textarea>
+  </section>
+</div>
+<script src="game.js"></script>
+</body>
+</html>

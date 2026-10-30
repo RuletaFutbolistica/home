@@ -1,0 +1,1086 @@
+/* =====================================================================
+   CARRERA A LA RULETA · HOJA DE ESTILOS
+   =====================================================================
+
+   ÍNDICE (buscá el número para saltar a cada sección)
+
+    1. COLORES · TEMA CLARO ........ todos los colores del juego, explicados
+    2. COLORES · TEMA OSCURO ....... los mismos colores, para modo oscuro
+    3. TIPOGRAFÍAS ................. qué letra usa cada tipo de texto
+    4. BASE ........................ fondo, ancho de la página, foco
+    5. CABECERA .................... nombre del juego y botones de arriba
+    6. TÍTULOS ..................... todos los títulos, juntos
+    7. DESCRIPCIONES Y TEXTOS ...... subtítulos, ayudas, etiquetas, avisos
+    8. BOTONES ..................... Girar, Siguiente, Entrenar, etc.
+    9. FORMULARIO .................. pantalla de crear jugador
+   10. JUGADOR EN CARRERA .......... barra con nombre, edad y media
+   11. RULETA ...................... tarjeta de la ruleta y su resultado
+   12. ELECCIONES Y OFERTAS ........ tarjetas de contratos, eventos, entrenamiento
+   13. REGISTRO DE PARTIDOS ........ lista de partidos de copas y selección
+   14. MINIJUEGO .................. tiro libre y penal
+   15. VITRINA ..................... títulos ganados
+   16. TOTALES E HISTORIAL ......... números de la carrera y tabla
+   17. FIN DE CARRERA .............. pantalla final
+   18. NOTICIAS .................... pop-up con forma de diario
+
+   SI CAMBIÁS UN COLOR Y NO PASA NADA:
+   los colores viven en las secciones 1 y 2. La sección 1 se ve cuando tu
+   dispositivo está en modo CLARO y la sección 2 cuando está en modo OSCURO.
+   Si cambiás un color en una y no ves el cambio, es porque estás viendo la
+   otra. Cambialo en las dos.
+   ===================================================================== */
+
+/* =====================================================================
+   1. COLORES · TEMA CLARO
+   Cada variable es un color con nombre. Las reglas de más abajo las usan
+   con var(--nombre), así que cambiando el valor acá cambia en todos lados.
+   ===================================================================== */
+:root {
+  color-scheme: light;
+
+  /* --- Colores generales de la interfaz --- */
+
+  /* Fondo de toda la página. También el fondo de las tarjetas de oferta
+     y el color del texto dentro de la opción elegida en el formulario. */
+  --bg: #e9eee6;
+
+  /* Fondo de las tarjetas: la tarjeta de la ruleta, los campos del
+     formulario, el aviso de confirmación y el centro de la ruleta. */
+  --surface: #f7f9f4;
+
+  /* Texto principal. También las líneas gruesas (debajo de la barra del
+     jugador, arriba de las tablas), el borde y el centro de la ruleta,
+     el fondo de la opción elegida y la sombra de la flecha. */
+  --ink: #14222c;
+
+  /* Texto secundario: descripciones, etiquetas del formulario y
+     encabezados de las tablas. */
+  --muted: #54656f;
+
+  /* Bordes finos y líneas separadoras (campos, tarjetas, filas de tabla). */
+  --line: #c5cec3;
+
+  /* Verde principal: fondo de los botones, resultado grande de la ruleta,
+     números destacados (la media), borde del botón activado (Sonido/Giro)
+     y línea de las victorias en el registro de partidos. */
+  --accent: #0aaf5a;
+
+  /* Color del TEXTO que va encima del verde principal (dentro de los botones). */
+  --accent-ink: #ffffff;
+
+  /* Dorado: flecha de la ruleta, contorno cuando navegás con teclado,
+     borde de los empates y marca de la porción elegida. */
+  --gold: #d99a14;
+
+  /* Texto oscuro que va encima del dorado (etiqueta "Renovación"). */
+  --on-gold: #14222c;
+
+  /* --- Diario de noticias (pop-up) --- */
+
+  /* Hoja del diario, su tinta y sus líneas, y el velo oscuro detrás. */
+  --paper: #f4ecd8;
+  --paper-ink: #2a2118;
+  --paper-rule: #8a7a5c;
+  --paper-red: #b8341f;
+  --news-scrim: rgba(20, 34, 44, 0.65);
+
+  /* Rojo: errores del formulario, borde del aviso de confirmación,
+     derrotas en el registro y números que bajan en el historial. */
+  --red: #b8341f;
+
+  /* Sombra/borde inferior de los botones (da el efecto de relieve). */
+  --btn-edge: rgba(0, 0, 0, 0.28);
+
+  /* --- Colores de la RULETA ---
+     La ruleta alterna 4 colores en orden: porción 1, 2, 3, 4, 1, 2...
+     Cada color tiene su par de texto para que se lea encima. */
+  --slice-1: #1d7a4a;
+  --slice-1-text: #ffffff;
+  --slice-2: #1f4e79;
+  --slice-2-text: #ffffff;
+  --slice-3: #b9391f;
+  --slice-3-text: #ffffff;
+  --slice-4: #e3a82a;
+  --slice-4-text: #14222c;
+
+  /* --- Colores del MINIJUEGO (tiro libre y penal) --- */
+
+  /* Césped de la cancha. */
+  --pitch: #1d7a4a;
+
+  /* Muñequito de tu jugador (el que patea; o el arquero si jugás de arquero). */
+  --kit-me: #e3a82a;
+
+  /* Muñequitos rivales: la barrera y el que patea el penal en contra. */
+  --kit-rival: #10202b;
+
+  /* Arquero rival. */
+  --kit-keeper: #d2573b;
+}
+
+/* =====================================================================
+   2. COLORES · TEMA OSCURO
+   Se activa solo cuando el dispositivo está en modo oscuro.
+   Acá están los MISMOS colores de la sección 1 pero para fondo oscuro.
+   Si una variable no aparece acá, usa el valor de la sección 1.
+   ===================================================================== */
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+
+    /* Interfaz */
+    --bg: #0e1a22;
+    --surface: #162630;
+    --ink: #e9efe7;
+    --muted: #93a5b0;
+    --line: #2a3d49;
+    --accent: #06a352;
+    --accent-ink: #0e1a22;
+    --gold: #f0cf3a;
+    --on-gold: #14222c;
+
+    /* Diario de noticias (pop-up) */
+    --paper: #d9cfb6;
+    --paper-ink: #1d1710;
+    --paper-rule: #6e6249;
+    --paper-red: #9c2a17;
+    --news-scrim: rgba(0, 0, 0, 0.75);
+    --red: #ef6a55;
+    --btn-edge: rgba(0, 0, 0, 0.28);
+
+    /* Ruleta */
+    --slice-1: #1f8a5a;
+    --slice-1-text: #ffffff;
+    --slice-2: #3b74a8;
+    --slice-2-text: #ffffff;
+    --slice-3: #c9452a;
+    --slice-3-text: #ffffff;
+    --slice-4: #f0cf3a;
+    --slice-4-text: #0e1a22;
+
+    /* Minijuego */
+    --pitch: #1f8a5a;
+    --kit-me: #f0cf3a;
+    --kit-rival: #10202b;
+    --kit-keeper: #d2573b;
+  }
+}
+
+/* =====================================================================
+   3. TIPOGRAFÍAS
+   Cada variable es una familia de letra con sus alternativas por si la
+   primera no carga.
+   ===================================================================== */
+:root {
+  /* Títulos grandes y botones (letra condensada, siempre en mayúsculas). */
+  --f-display: 'Big Shoulders Display', 'Barlow Condensed', Impact, sans-serif;
+
+  /* Texto corrido: descripciones, etiquetas, ayudas. */
+  --f-body: 'Barlow', system-ui, -apple-system, 'Segoe UI', sans-serif;
+
+  /* Números y datos: media, edad, tablas, marcadores. */
+  --f-num: 'Barlow Condensed', 'Arial Narrow', sans-serif;
+}
+
+/* =====================================================================
+   4. BASE
+   Reglas que afectan a toda la página.
+   ===================================================================== */
+
+/* Evita que los elementos con atributo hidden aparezcan igual. */
+[hidden] {
+  display: none !important;
+}
+
+/* El ancho de un elemento incluye su borde y su relleno. */
+* {
+  box-sizing: border-box;
+}
+
+img {
+  max-width: 100%;
+}
+
+/* Página entera: fondo, color de texto, letra y márgenes laterales. */
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font: 400 16px/1.45 var(--f-body);
+  padding-block: 12px 56px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+
+/* Columna central: todo el juego vive acá. Ancho máximo y separación vertical. */
+.wrap {
+  max-width: 720px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+/* Cada pantalla (crear jugador / jugar / fin) es una <section>. */
+.wrap > section {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  min-width: 0;
+}
+
+/* Quita los márgenes que el navegador pone por defecto. */
+h1,
+h2,
+h3,
+h4,
+p,
+dl,
+dd {
+  margin: 0;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+/* Contorno dorado al navegar con teclado. */
+:focus-visible {
+  outline: 3px solid var(--gold);
+  outline-offset: 2px;
+}
+
+/* =====================================================================
+   5. CABECERA
+   Franja de arriba: nombre del juego a la izquierda y los botones chicos
+   (Sonido, Giro, Nueva carrera) a la derecha.
+   ===================================================================== */
+
+/* Contenedor de la cabecera. */
+.top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+/* Nombre del juego ("Carrera a la Ruleta"). */
+.brand {
+  font: 800 22px/1 var(--f-display);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+/* Grupo de botones chicos. */
+.tools {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* Botón chico de la cabecera (Sonido, Giro, Nueva carrera). */
+.chip {
+  padding: 7px 12px;
+  border: 1.5px solid var(--line);
+  background: transparent;
+  cursor: pointer;
+  font: 600 14px/1.2 var(--f-body);
+  border-radius: 4px;
+}
+
+/* Botón chico cuando está activado (Sonido: sí). */
+.chip[aria-pressed='true'] {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* Aviso de confirmación ("¿Retirarte ahora?"). Aparece debajo de la cabecera. */
+.confirm {
+  border: 2px solid var(--red);
+  background: var(--surface);
+  padding: 12px 14px;
+  display: grid;
+  gap: 10px;
+}
+
+/* Fila con los dos botones del aviso (Sí / Cancelar). */
+.row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+/* =====================================================================
+   6. TÍTULOS
+   Todos los títulos del juego en un solo lugar, del más grande al más chico.
+   ===================================================================== */
+
+/* Título grande de la pantalla de inicio ("Arrancás a los 16..."). */
+.hero {
+  font: 800 clamp(34px, 9.5vw, 58px) / 0.95 var(--f-display);
+  text-transform: uppercase;
+  letter-spacing: 0.01em;
+  text-wrap: balance;
+}
+
+/* Título del paso actual, dentro de la tarjeta de la ruleta
+   ("Ruleta de minutos", "Partido con la selección"). */
+.stage h3 {
+  font: 800 clamp(26px, 7.5vw, 34px) / 1 var(--f-display);
+  text-transform: uppercase;
+  text-wrap: balance;
+}
+
+/* Nombre del jugador en la barra de arriba. */
+.player h2 {
+  font: 800 clamp(28px, 8vw, 40px) / 1 var(--f-display);
+  text-transform: uppercase;
+  overflow-wrap: anywhere;
+}
+
+/* Veredicto de la pantalla final ("Leyenda del fútbol"). */
+.verdict {
+  font: 800 clamp(24px, 7vw, 32px) / 1.05 var(--f-display);
+  text-transform: uppercase;
+  color: var(--accent);
+  text-wrap: balance;
+}
+
+/* Nombre del club en cada tarjeta de oferta o elección. */
+.offer h4 {
+  font: 800 24px/1.05 var(--f-display);
+  text-transform: uppercase;
+}
+
+/* Títulos de sección chicos ("Vitrina", "Historial"). */
+.sec {
+  font: 800 22px/1 var(--f-display);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+/* =====================================================================
+   7. DESCRIPCIONES Y TEXTOS
+   Textos secundarios, ayudas, etiquetas y avisos.
+   ===================================================================== */
+
+/* Etiqueta chica de arriba ("Temporada 3 · 2028/29", "Fin de carrera"). */
+.eyebrow {
+  font: 700 13px/1 var(--f-num);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* Descripción debajo del título de inicio. */
+.lede {
+  color: var(--muted);
+  max-width: 56ch;
+}
+
+/* Descripción debajo del título de la ruleta ("Tu media de 70 frente a..."). */
+.hint {
+  color: var(--muted);
+  max-width: 44ch;
+}
+
+/* Nota chica ("Segunda oportunidad: 1 disponible", ayuda del formulario). */
+.note {
+  font-size: 14px;
+  color: var(--muted);
+}
+
+/* Mensaje de error del formulario ("Ponele un nombre a tu jugador"). */
+.err {
+  color: var(--red);
+  min-height: 1.3em;
+  font-weight: 600;
+}
+
+/* Etiquetas del formulario ("Nombre del jugador", "Posición"). */
+label,
+legend {
+  font: 600 13px/1.2 var(--f-body);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* Subtítulo del jugador ("Argentina · Delantero · Potencial: Crack"). */
+.player .sub {
+  color: var(--muted);
+  font-size: 15px;
+}
+
+/* Línea del club ("River Plate · Argentina · contrato 2 años..."). */
+.club-line {
+  font: 600 16px/1.35 var(--f-body);
+}
+
+/* La parte secundaria de esa línea (país, contrato). */
+.club-line span {
+  color: var(--muted);
+  font-weight: 400;
+}
+
+/* Línea de confianza del DT, resistencia y habilidades (tiene saltos de línea). */
+#p-extra {
+  white-space: pre-line;
+}
+
+/* Descripción dentro de las tarjetas de oferta/elección. */
+.offer p {
+  color: var(--muted);
+  font-size: 15px;
+}
+
+/* Nombre de cada dato ("Edad", "Media", "Contrato", "Sueldo"). */
+dt {
+  font: 600 12px/1.2 var(--f-body);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* Valor de cada dato (el número). */
+dd {
+  font: 700 26px/1.1 var(--f-num);
+  font-variant-numeric: tabular-nums;
+}
+
+/* =====================================================================
+   8. BOTONES
+   El botón grande verde, y sus variantes.
+   ===================================================================== */
+
+/* Botón principal (Girar la ruleta, Siguiente, Firmar y debutar). */
+.btn {
+  min-height: 52px;
+  padding: 12px 26px;
+  border: 0;
+  border-bottom: 4px solid var(--btn-edge);
+  border-radius: 4px;
+  background: var(--accent);
+  color: var(--accent-ink);
+  cursor: pointer;
+  font: 800 21px/1 var(--f-display);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+/* Efecto de "hundido" al apretarlo. */
+.btn:active {
+  transform: translateY(2px);
+  border-bottom-width: 2px;
+}
+
+/* Botón desactivado (mientras gira la ruleta). */
+.btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* Variante sin relleno (Girar de nuevo, Retirarme, Cancelar). */
+.btn.ghost {
+  background: transparent;
+  color: var(--ink);
+  border: 1.5px solid var(--line);
+  border-bottom-width: 1.5px;
+}
+
+/* Variante más chica (Firmar, Entrenar, Elegir, Izquierda/Centro/Derecha). */
+.btn.small {
+  min-height: 44px;
+  padding: 9px 18px;
+  font-size: 18px;
+}
+
+/* Fila de botones debajo de la ruleta. */
+.actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
+  width: 100%;
+}
+
+/* =====================================================================
+   9. FORMULARIO
+   Pantalla de crear jugador.
+   ===================================================================== */
+
+/* Dibujo de la cancha de la pantalla de inicio. */
+.pitch {
+  width: 100%;
+  height: auto;
+  color: var(--accent);
+  opacity: 0.45;
+  display: block;
+}
+
+/* Contenedor del formulario. */
+.form {
+  display: grid;
+  gap: 14px;
+}
+
+/* Cada campo: etiqueta arriba y campo abajo. */
+.form label {
+  display: grid;
+  gap: 6px;
+}
+
+/* Campo de texto y listas desplegables (nombre, nacionalidad, país, club). */
+input[type='text'],
+select {
+  padding: 12px;
+  min-height: 48px;
+  width: 100%;
+  border: 1.5px solid var(--line);
+  background: var(--surface);
+  border-radius: 4px;
+}
+
+/* Grupo de la posición (se quita el borde que trae el navegador). */
+fieldset {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+/* Cuadrícula con las 4 posiciones. */
+.seg {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 8px;
+}
+
+/* Cada opción de posición (el círculo real está oculto, se ve el recuadro). */
+.form .opt {
+  position: relative;
+  display: block;
+}
+
+.opt input {
+  position: absolute;
+  opacity: 0;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  cursor: pointer;
+}
+
+/* Recuadro visible de la opción (sin elegir). */
+.opt span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  padding: 10px;
+  border: 1.5px solid var(--line);
+  background: var(--surface);
+  font: 600 16px/1.1 var(--f-body);
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--ink);
+}
+
+/* Recuadro de la opción elegida. */
+.opt input:checked + span {
+  background: var(--ink);
+  color: var(--bg);
+  border-color: var(--ink);
+}
+
+/* Contorno al navegar con teclado. */
+.opt input:focus-visible + span {
+  outline: 3px solid var(--gold);
+  outline-offset: 2px;
+}
+
+/* =====================================================================
+   10. JUGADOR EN CARRERA
+   Barra de arriba con nombre, edad y media.
+   ===================================================================== */
+
+/* Barra completa: nombre a la izquierda, números a la derecha. */
+.player {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 6px 16px;
+  align-items: end;
+  padding-bottom: 12px;
+  border-bottom: 2px solid var(--ink);
+}
+
+/* Grupo de números (Edad y Media). */
+.pl-stats {
+  display: flex;
+  gap: 18px;
+}
+
+/* Número grande de la media. */
+.pl-stats .big {
+  font-size: 54px;
+  line-height: 0.9;
+  color: var(--accent);
+}
+
+/* =====================================================================
+   11. RULETA
+   La tarjeta central: título, ruleta, resultado y botones.
+   ===================================================================== */
+
+/* Tarjeta que contiene todo el paso actual. */
+.stage {
+  background: var(--surface);
+  border: 1.5px solid var(--line);
+  padding: 20px 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  text-align: center;
+  min-width: 0;
+}
+
+/* Caja cuadrada donde se dibuja la ruleta (define su tamaño máximo). */
+.wheel-wrap {
+  position: relative;
+  width: min(100%, 360px);
+  aspect-ratio: 1;
+  margin: 8px 0 4px;
+}
+
+/* El dibujo de la ruleta (los colores de las porciones están en la sección 1). */
+#wheel {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* Flecha dorada de arriba que marca el resultado. */
+.pointer {
+  position: absolute;
+  top: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2;
+  width: 0;
+  height: 0;
+  border-left: 13px solid transparent;
+  border-right: 13px solid transparent;
+  border-top: 28px solid var(--gold);
+  filter: drop-shadow(0 2px 0 var(--ink));
+}
+
+/* Resultado grande debajo de la ruleta ("Titular: 32 partidos"). */
+.result {
+  font: 800 clamp(26px, 8vw, 34px) / 1.05 var(--f-display);
+  text-transform: uppercase;
+  min-height: 1.1em;
+  color: var(--accent);
+  text-wrap: balance;
+}
+
+/* Resultado cuando el texto es largo (partidos, eventos): letra más chica. */
+.result.long {
+  font: 600 18px/1.35 var(--f-body);
+  text-transform: none;
+  letter-spacing: 0;
+  max-width: 40ch;
+}
+
+/* =====================================================================
+   12. ELECCIONES Y OFERTAS
+   Tarjetas donde elegís algo: ofertas de contrato, eventos, entrenamiento.
+   ===================================================================== */
+
+/* Lista de tarjetas. */
+#offers {
+  display: grid;
+  gap: 10px;
+  width: 100%;
+}
+
+/* Cada tarjeta. */
+.offer {
+  display: grid;
+  gap: 10px;
+  text-align: left;
+  border: 1.5px solid var(--line);
+  background: var(--bg);
+  padding: 14px;
+}
+
+/* Datos de la oferta (Contrato, Sueldo, Rol esperado). */
+.offer dl {
+  display: flex;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+
+.offer dd {
+  font-size: 22px;
+}
+
+/* Etiqueta dorada ("Renovación") y número de nivel en entrenamiento. */
+.tag {
+  margin-left: 8px;
+  padding: 2px 6px;
+  background: var(--gold);
+  color: var(--on-gold);
+  font: 700 11px/1.4 var(--f-num);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  vertical-align: middle;
+}
+
+/* =====================================================================
+   13. REGISTRO DE PARTIDOS
+   Lista de partidos jugados en copas y selección, debajo de la ruleta.
+   ===================================================================== */
+
+/* Contenedor (título + lista). */
+.ntbox {
+  width: 100%;
+  display: grid;
+  gap: 8px;
+  text-align: left;
+}
+
+/* Lista de partidos. */
+.ntlog {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  border-top: 2px solid var(--ink);
+}
+
+/* Cada partido: etapa, rival y marcador. */
+.ntlog li {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) auto;
+  gap: 2px 10px;
+  align-items: baseline;
+  padding: 8px 0 8px 10px;
+  border-bottom: 1px solid var(--line);
+  border-left: 5px solid var(--line);
+  font: 600 16px/1.25 var(--f-num);
+}
+
+/* Franja de color a la izquierda según el resultado:
+   V = victoria (verde), D = derrota (rojo), E = empate (dorado). */
+.ntlog li.V {
+  border-left-color: var(--accent);
+}
+
+.ntlog li.D {
+  border-left-color: var(--red);
+}
+
+.ntlog li.E {
+  border-left-color: var(--gold);
+}
+
+/* Etapa del partido ("Cuartos de final"). */
+.ntlog span {
+  color: var(--muted);
+  font: 400 13px/1.25 var(--f-body);
+}
+
+/* Marcador ("2-1"). */
+.ntlog em {
+  font-style: normal;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+/* Tu aporte en el partido ("1 gol", "valla invicta"). */
+.ntlog small {
+  grid-column: 1 / -1;
+  color: var(--muted);
+  font: 400 13px/1.25 var(--f-body);
+}
+
+/* En pantallas angostas la etapa pasa a su propia línea. */
+@media (max-width: 420px) {
+  .ntlog li {
+    grid-template-columns: 1fr auto;
+  }
+
+  .ntlog span {
+    grid-column: 1 / -1;
+  }
+}
+
+/* =====================================================================
+   14. MINIJUEGO
+   Tiro libre, penal y partido clave. Los colores de la cancha y los
+   muñequitos están en las secciones 1 y 2 (--pitch y --kit-*).
+   ===================================================================== */
+
+/* Contenedor del minijuego. */
+.mini-wrap {
+  display: grid;
+  gap: 10px;
+  width: min(100%, 380px);
+  justify-items: center;
+}
+
+/* Cancha (se dibuja por código; acá solo el marco y el tamaño). */
+#mini {
+  width: 100%;
+  aspect-ratio: 1 / 1.15;
+  display: block;
+  border: 1.5px solid var(--line);
+  touch-action: none;
+  cursor: crosshair;
+}
+
+/* Botones del arquero (Izquierda / Centro / Derecha). */
+.mini-ui {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  flex-wrap: wrap;
+  width: 100%;
+}
+
+/* =====================================================================
+   15. VITRINA
+   Lista de títulos ganados.
+   ===================================================================== */
+
+.vitwrap {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+}
+
+.vit {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 0;
+}
+
+/* Cada título: nombre, cantidad y años. */
+.vit li {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 10px;
+  align-items: baseline;
+  border-top: 1px solid var(--line);
+  padding: 9px 0;
+  font: 700 20px/1.2 var(--f-num);
+}
+
+/* Cantidad de veces ("×3"). */
+.vit .x {
+  color: var(--accent);
+}
+
+/* Años en que se ganó. */
+.vit span {
+  color: var(--muted);
+  font: 400 14px/1.3 var(--f-body);
+}
+
+/* =====================================================================
+   16. TOTALES E HISTORIAL
+   ===================================================================== */
+
+/* Cuadrícula de totales (Partidos, Goles, Títulos, Ganancias). */
+.totals {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(104px, 1fr));
+  gap: 12px 14px;
+}
+
+/* Contenedor de la tabla (permite deslizarla de costado en el celular). */
+.tablewrap {
+  overflow-x: auto;
+  border-top: 2px solid var(--ink);
+}
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+  min-width: 560px;
+  font: 600 16px/1.3 var(--f-num);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Encabezado de columnas. */
+th {
+  font: 600 12px/1.2 var(--f-body);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  text-align: left;
+  padding: 10px 10px 8px 0;
+}
+
+/* Celdas. */
+td {
+  padding: 9px 10px 9px 0;
+  border-top: 1px solid var(--line);
+}
+
+/* Columnas numéricas alineadas a la derecha. */
+td.n,
+th.n {
+  text-align: right;
+}
+
+/* Media que sube / baja en el historial. */
+.up {
+  color: var(--accent);
+}
+
+.down {
+  color: var(--red);
+}
+
+/* =====================================================================
+   17. FIN DE CARRERA
+   ===================================================================== */
+
+/* Cuadro de texto con el resumen para copiar. */
+#e-text {
+  width: 100%;
+  padding: 10px;
+  border: 1.5px solid var(--line);
+  background: var(--surface);
+  font: 14px/1.4 var(--f-body);
+  border-radius: 4px;
+}
+
+/* =====================================================================
+   18. NOTICIAS (pop-up con forma de diario)
+   Colores: --paper (hoja), --paper-ink (letra), --paper-rule (líneas), --paper-red (etiqueta extra),
+   --news-scrim (velo oscuro de fondo). Están en las secciones 1 y 2.
+   ===================================================================== */
+
+/* Velo que cubre toda la pantalla y centra la hoja. */
+.news-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background: var(--news-scrim);
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  overflow-y: auto;
+}
+
+/* La hoja del diario. Entra con un pequeño giro, como si la tiraran sobre la mesa. */
+.paper {
+  width: min(520px, 100%);
+  background: var(--paper);
+  color: var(--paper-ink);
+  border: 1px solid var(--paper-rule);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+  padding: 18px 20px 20px;
+  display: grid;
+  gap: 12px;
+  font-family: 'Source Serif 4', Georgia, 'Times New Roman', serif;
+  animation: paper-in 0.35s ease-out;
+}
+
+@keyframes paper-in {
+  from {
+    opacity: 0;
+    transform: rotate(-3deg) scale(0.92) translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Cabecera: nombre del diario y fecha, con doble línea abajo. */
+.paper-head {
+  text-align: center;
+  border-bottom: 3px double var(--paper-rule);
+  padding-bottom: 8px;
+}
+
+/* Nombre del diario. */
+.paper-name {
+  font:
+    900 clamp(24px, 7vw, 32px) / 1 'Playfair Display',
+    Georgia,
+    serif;
+  letter-spacing: 0.02em;
+}
+
+/* Línea con la edición y la etiqueta "Edición extra". */
+.paper-date {
+  margin-top: 6px;
+  font:
+    600 12px/1.2 'Source Serif 4',
+    Georgia,
+    serif;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+/* Etiqueta roja de noticia extra (clásico, selección). */
+.paper-tag {
+  color: var(--paper-red);
+  font-weight: 600;
+}
+
+/* Titular grande. */
+.paper-h {
+  font:
+    900 clamp(24px, 6.5vw, 32px) / 1.08 'Playfair Display',
+    Georgia,
+    serif;
+}
+
+/* Bajada: la frase corta debajo del titular. */
+.paper-d {
+  font-style: italic;
+  font-size: 16px;
+  border-bottom: 1px solid var(--paper-rule);
+  padding-bottom: 10px;
+}
+
+/* Cuerpo de la nota. */
+.paper-b {
+  font-size: 16px;
+  line-height: 1.5;
+  text-align: justify;
+  hyphens: auto;
+}
+
+/* Efecto en el juego (ojeadores, confianza del DT). */
+.paper-fx {
+  font: 600 14px/1.3 var(--f-body);
+  color: var(--paper-ink);
+  background: color-mix(in srgb, var(--paper-rule) 22%, transparent);
+  border-left: 4px solid var(--accent);
+  padding: 8px 10px;
+}
+
+.paper .btn {
+  justify-self: end;
+}

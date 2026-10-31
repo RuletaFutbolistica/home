@@ -1,80 +1,137 @@
-:root {
-  color-scheme: light;
+/* =====================================================================
+   CARRERA A LA RULETA · HOJA DE ESTILOS
+   =====================================================================
 
-  --bg: #e9eee6;
-  --surface: #f7f9f4;
-  --ink: #14222c;
-  --muted: #54656f;
-  --line: #c5cec3;
-  --accent: #0aaf5a;
-  --accent-ink: #ffffff;
-  --gold: #d99a14;
+   ÍNDICE (buscá el número para saltar a cada sección)
+
+    1. COLORES ..................... todos los colores del juego, explicados
+    2. TIPOGRAFÍAS ................. qué letra usa cada tipo de texto
+    3. BASE ........................ fondo, ancho de la página, foco
+    4. CABECERA .................... nombre del juego y botones de arriba
+    5. TÍTULOS ..................... todos los títulos, juntos
+    6. DESCRIPCIONES Y TEXTOS ...... subtítulos, ayudas, etiquetas, avisos
+    7. BOTONES ..................... Girar, Siguiente, Entrenar, etc.
+    8. FORMULARIO .................. pantalla de inicio: título y ficha del jugador
+    9. JUGADOR EN CARRERA .......... barra con nombre, edad y media
+   10. RULETA ...................... tarjeta de la ruleta y su resultado
+   11. ELECCIONES Y OFERTAS ........ tarjetas de contratos, eventos, entrenamiento
+   12. REGISTRO DE PARTIDOS ........ lista de partidos de copas y selección
+   13. MINIJUEGO .................. tiro libre y penal
+   14. VITRINA ..................... títulos ganados
+   15. TOTALES E HISTORIAL ......... números de la carrera y tabla
+   16. FIN DE CARRERA .............. pantalla final
+   17. NOTICIAS .................... pop-up con forma de diario
+
+   SI CAMBIÁS UN COLOR Y NO PASA NADA:
+   todos los colores viven en la sección 1 (hay un solo tema, no hay modo
+   claro ni oscuro). Si no ves el cambio, refrescá la página sin caché.
+   ===================================================================== */
+
+/* =====================================================================
+   1. COLORES
+   El juego tiene un solo tema: verde noche. Cada variable es un color con
+   nombre. Las reglas de más abajo las usan con var(--nombre), así que
+   cambiando el valor acá cambia en todos lados.
+   ===================================================================== */
+:root {
+  color-scheme: dark;
+
+  /* --- Colores generales de la interfaz --- */
+
+  /* Fondo de toda la página: un degradado de verde muy oscuro. --bg es el
+     color base (también el color del texto dentro de la opción elegida en
+     el formulario y de las tarjetas de oferta). --bg-2 y --bg-3 son los
+     otros dos tonos del degradado. */
+  --bg: #1c2621;
+  --bg-2: #1b2e26;
+  --bg-3: #1c2f26;
+
+  /* Cuadrícula finita que se ve de fondo (la "rejilla" de la cancha).
+     Poné 0 de transparencia (rgba(255,255,255,0)) para quitarla. */
+  --grid: rgba(255, 255, 255, 0.025);
+
+  /* Fondo de las tarjetas: la tarjeta de la ruleta, la tarjeta del
+     formulario, el aviso de confirmación y el centro de la ruleta. */
+  --surface: #1f2c27;
+
+  /* Fondo de los campos del formulario (nombre, listas) y de las opciones
+     de posición sin elegir. */
+  --field: #17232c;
+
+  /* Texto principal. También las líneas gruesas (debajo de la barra del
+     jugador, arriba de las tablas), el borde y el centro de la ruleta,
+     el fondo de la opción elegida y la sombra de la flecha. */
+  --ink: #f1f5f2;
+
+  /* Texto secundario: descripciones, ayudas y encabezados de las tablas. */
+  --muted: #a4b4ac;
+
+  /* Bordes finos y líneas separadoras (campos, tarjetas, filas de tabla). */
+  --line: #32463c;
+
+  /* Verde principal (#19b866): fondo de los botones, la etiqueta "EDAD",
+     la segunda línea del título de inicio, el borde de la tarjeta del
+     formulario, resultado grande de la ruleta, números destacados (la
+     media), borde del botón activado (Sonido/Giro) y línea de las
+     victorias en el registro de partidos. */
+  --accent: #19b866;
+
+  /* Color del TEXTO que va encima del verde principal (botones, "EDAD"). */
+  --accent-ink: #0b1a13;
+
+  /* Dorado: flecha de la ruleta, contorno cuando navegás con teclado,
+     borde de los empates y marca de la porción elegida. */
+  --gold: #f0cf3a;
+
+  /* Texto oscuro que va encima del dorado (etiqueta "Renovación"). */
   --on-gold: #14222c;
-  --paper: #f4ecd8;
-  --paper-ink: #2a2118;
-  --paper-rule: #8a7a5c;
-  --paper-red: #b8341f;
-  --news-scrim: rgba(20, 34, 44, 0.65);
-  --red: #b8341f;
-  --btn-edge: rgba(0, 0, 0, 0.28);
-  --slice-1: #1d7a4a;
+
+  /* Rojo: errores del formulario, borde del aviso de confirmación,
+     derrotas en el registro y números que bajan en el historial. */
+  --red: #ef6a55;
+
+  /* Sombra/borde inferior de los botones (da el efecto de relieve). */
+  --btn-edge: rgba(0, 0, 0, 0.35);
+
+  /* --- Diario de noticias (pop-up) --- */
+
+  /* Hoja del diario, su tinta, sus líneas, el rojo de "Edición extra" y el
+     velo oscuro que tapa lo de atrás. */
+  --paper: #e9dfc6;
+  --paper-ink: #1d1710;
+  --paper-rule: #7a6c50;
+  --paper-red: #a82f1b;
+  --news-scrim: rgba(0, 0, 0, 0.75);
+
+  /* --- Colores de la RULETA ---
+     La ruleta alterna 4 colores en orden: porción 1, 2, 3, 4, 1, 2...
+     Cada color tiene su par de texto para que se lea encima. */
+  --slice-1: #1f8a5a;
   --slice-1-text: #ffffff;
-  --slice-2: #1f4e79;
+  --slice-2: #3b74a8;
   --slice-2-text: #ffffff;
-  --slice-3: #b9391f;
+  --slice-3: #c9452a;
   --slice-3-text: #ffffff;
-  --slice-4: #e3a82a;
-  --slice-4-text: #14222c;
-  --pitch: #1d7a4a;
-  --kit-me: #e3a82a;
+  --slice-4: #f0cf3a;
+  --slice-4-text: #0e1a22;
+
+  /* --- Colores del MINIJUEGO (tiro libre y penal) --- */
+
+  /* Césped de la cancha. */
+  --pitch: #1f8a5a;
+
+  /* Muñequito de tu jugador (el que patea; o el arquero si jugás de arquero). */
+  --kit-me: #f0cf3a;
+
+  /* Muñequitos rivales: la barrera y el que patea el penal en contra. */
   --kit-rival: #10202b;
+
+  /* Arquero rival. */
   --kit-keeper: #d2573b;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    color-scheme: dark;
-
-    /* Interfaz */
-    --bg: #0e1a22;
-    --surface: #162630;
-    --ink: #e9efe7;
-    --muted: #93a5b0;
-    --line: #2a3d49;
-    --accent: #06a352;
-    --accent-ink: #0e1a22;
-    --gold: #f0cf3a;
-    --on-gold: #14222c;
-
-    /* Diario de noticias (pop-up) */
-    --paper: #d9cfb6;
-    --paper-ink: #1d1710;
-    --paper-rule: #6e6249;
-    --paper-red: #9c2a17;
-    --news-scrim: rgba(0, 0, 0, 0.75);
-    --red: #ef6a55;
-    --btn-edge: rgba(0, 0, 0, 0.28);
-
-    /* Ruleta */
-    --slice-1: #1f8a5a;
-    --slice-1-text: #ffffff;
-    --slice-2: #3b74a8;
-    --slice-2-text: #ffffff;
-    --slice-3: #c9452a;
-    --slice-3-text: #ffffff;
-    --slice-4: #f0cf3a;
-    --slice-4-text: #0e1a22;
-
-    /* Minijuego */
-    --pitch: #1f8a5a;
-    --kit-me: #f0cf3a;
-    --kit-rival: #10202b;
-    --kit-keeper: #d2573b;
-  }
-}
-
 /* =====================================================================
-   3. TIPOGRAFÍAS
+   2. TIPOGRAFÍAS
    Cada variable es una familia de letra con sus alternativas por si la
    primera no carga.
    ===================================================================== */
@@ -90,7 +147,7 @@
 }
 
 /* =====================================================================
-   4. BASE
+   3. BASE
    Reglas que afectan a toda la página.
    ===================================================================== */
 
@@ -111,7 +168,18 @@ img {
 /* Página entera: fondo, color de texto, letra y márgenes laterales. */
 body {
   margin: 0;
-  background: var(--bg);
+  min-height: 100vh;
+  /* Capas del fondo, de arriba hacia abajo: rejilla vertical, rejilla
+     horizontal y degradado verde noche (colores --bg, --bg-2 y --bg-3). */
+  background-color: var(--bg);
+  background-image:
+    linear-gradient(90deg, var(--grid) 1px, transparent 1px),
+    linear-gradient(var(--grid) 1px, transparent 1px),
+    linear-gradient(135deg, var(--bg) 0%, var(--bg-2) 55%, var(--bg-3) 100%);
+  background-size:
+    56px 56px,
+    56px 56px,
+    cover;
   color: var(--ink);
   font: 400 16px/1.45 var(--f-body);
   padding-block: 12px 56px;
@@ -162,7 +230,7 @@ textarea {
 }
 
 /* =====================================================================
-   5. CABECERA
+   4. CABECERA
    Franja de arriba: nombre del juego a la izquierda y los botones chicos
    (Sonido, Giro, Nueva carrera) a la derecha.
    ===================================================================== */
@@ -223,7 +291,7 @@ textarea {
 }
 
 /* =====================================================================
-   6. TÍTULOS
+   5. TÍTULOS
    Todos los títulos del juego en un solo lugar, del más grande al más chico.
    ===================================================================== */
 
@@ -233,6 +301,11 @@ textarea {
   text-transform: uppercase;
   letter-spacing: 0.01em;
   text-wrap: balance;
+}
+
+/* Segunda línea del título de inicio ("La ruleta decide el resto"), en verde. */
+.hero .accent {
+  color: var(--accent);
 }
 
 /* Título del paso actual, dentro de la tarjeta de la ruleta
@@ -272,7 +345,7 @@ textarea {
 }
 
 /* =====================================================================
-   7. DESCRIPCIONES Y TEXTOS
+   6. DESCRIPCIONES Y TEXTOS
    Textos secundarios, ayudas, etiquetas y avisos.
    ===================================================================== */
 
@@ -361,7 +434,7 @@ dd {
 }
 
 /* =====================================================================
-   8. BOTONES
+   7. BOTONES
    El botón grande verde, y sus variantes.
    ===================================================================== */
 
@@ -417,40 +490,108 @@ dd {
 }
 
 /* =====================================================================
-   9. FORMULARIO
+   8. FORMULARIO
    Pantalla de crear jugador.
    ===================================================================== */
 
-/* Dibujo de la cancha de la pantalla de inicio. */
-.pitch {
-  width: 100%;
-  height: auto;
-  color: var(--accent);
-  opacity: 0.45;
-  display: block;
+/* ---------- Pantalla de inicio: la página es una fila con el título a la
+   izquierda y la tarjeta de la ficha a la derecha (en celular van una
+   debajo de la otra). ---------- */
+
+/* En la pantalla de inicio el nombre del juego de la cabecera se oculta
+   (el título grande ya lo dice) y la página se ensancha en computadora. */
+.wrap:has(#s-create:not([hidden])) .brand {
+  display: none;
 }
 
-/* Contenedor del formulario. */
+.wrap:has(#s-create:not([hidden])) .tools {
+  margin-left: auto;
+}
+
+/* Bloque del título: etiqueta, título grande y descripción. */
+.intro {
+  display: grid;
+  gap: 16px;
+  align-content: center;
+  justify-items: start;
+}
+
+/* Etiqueta verde con borde arriba del título ("Simulador de carrera..."). */
+.tag-top {
+  border: 1.5px solid var(--accent);
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+  padding: 8px 12px;
+  font: 700 13px/1.2 var(--f-num);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+/* ---------- Tarjeta de la ficha del jugador (el formulario) ---------- */
+
+/* La tarjeta: fondo, borde verde y sombra. */
 .form {
   display: grid;
   gap: 14px;
+  padding: 20px;
+  background: var(--surface);
+  border: 2px solid var(--accent);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.35);
+}
+
+/* Fila de arriba de la tarjeta: "DEBUTANTE" a la izquierda y la edad a la derecha. */
+.f-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--line);
+}
+
+.f-head strong {
+  font: 800 28px/1 var(--f-display);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+/* Etiqueta verde con la edad ("EDAD: 16"). */
+.f-age {
+  background: var(--accent);
+  color: var(--accent-ink);
+  padding: 8px 14px;
+  font: 800 22px/1 var(--f-display);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
 }
 
 /* Cada campo: etiqueta arriba y campo abajo. */
-.form label {
+.form label,
+.form legend {
   display: grid;
   gap: 6px;
+  font: 700 15px/1.2 var(--f-body);
+  color: var(--ink);
+  padding: 0;
 }
 
-/* Campo de texto y listas desplegables (nombre, nacionalidad, país, club). */
+/* Campo de texto y listas desplegables (nombre, nacionalidad, país, club).
+   Letra de 16 px para que el celular no haga zoom al tocarlos. */
 input[type='text'],
 select {
   padding: 12px;
   min-height: 48px;
   width: 100%;
   border: 1.5px solid var(--line);
-  background: var(--surface);
+  background: var(--field);
   border-radius: 4px;
+  font: 400 16px/1.2 var(--f-body);
+}
+
+input[type='text']::placeholder {
+  color: var(--muted);
+  opacity: 0.8;
 }
 
 /* Grupo de la posición (se quita el borde que trae el navegador). */
@@ -463,10 +604,10 @@ fieldset {
   min-width: 0;
 }
 
-/* Cuadrícula con las 4 posiciones. */
+/* Cuadrícula con las 4 posiciones: siempre 2 por fila. */
 .seg {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  grid-template-columns: 1fr 1fr;
   gap: 8px;
 }
 
@@ -494,18 +635,20 @@ fieldset {
   min-height: 48px;
   padding: 10px;
   border: 1.5px solid var(--line);
-  background: var(--surface);
+  background: var(--field);
   font: 600 16px/1.1 var(--f-body);
   letter-spacing: 0;
   text-transform: none;
   color: var(--ink);
 }
 
-/* Recuadro de la opción elegida. */
+/* Recuadro de la opción elegida: fondo claro con un borde verde. */
 .opt input:checked + span {
   background: var(--ink);
   color: var(--bg);
-  border-color: var(--ink);
+  border-color: var(--accent);
+  box-shadow: inset 0 0 0 2px var(--accent);
+  font-weight: 700;
 }
 
 /* Contorno al navegar con teclado. */
@@ -514,8 +657,221 @@ fieldset {
   outline-offset: 2px;
 }
 
+/* Recuadro con forma de cancha que explica los clubes grandes. El texto va
+   sobre un fondo propio para que las líneas no lo tapen. */
+.tip {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-height: 84px;
+  padding: 12px;
+  border: 1.5px solid color-mix(in srgb, var(--accent) 55%, transparent);
+  background:
+    linear-gradient(var(--tip-line), var(--tip-line)) center / 2px 100% no-repeat,
+    color-mix(in srgb, var(--accent) 12%, var(--surface));
+  --tip-line: color-mix(in srgb, var(--accent) 35%, transparent);
+}
+
+/* Círculo central de la cancha. */
+.tip::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 64px;
+  height: 64px;
+  transform: translate(-50%, -50%);
+  border: 2px solid var(--tip-line);
+  border-radius: 50%;
+}
+
+.tip span {
+  position: relative;
+  z-index: 1;
+  padding: 8px 10px;
+  background: color-mix(in srgb, var(--surface) 94%, transparent);
+  font: 400 14px/1.3 var(--f-body);
+  color: var(--ink);
+  text-align: center;
+}
+
+/* País y club: apilados (en celular van lado a lado para ahorrar alto). */
+.pair {
+  display: grid;
+  gap: 14px;
+}
+
+/* Mensaje de error y botón ocupan todo el ancho de la tarjeta. */
+.form .btn {
+  width: 100%;
+}
+
+/* ---------- Celular: título compacto ---------- */
+@media (max-width: 899px) {
+  .intro {
+    gap: 12px;
+  }
+
+  /* Cada línea del título va entera (no se corta). El tamaño exacto lo calcula
+     game.js (función fitHero) para que la línea más larga ocupe justo el ancho
+     de la etiqueta verde. Este tamaño es solo el de reserva. */
+  #s-create .hero {
+    font-size: 8vw;
+  }
+
+  #s-create .hero .hl {
+    white-space: nowrap;
+  }
+
+  /* La etiqueta verde ocupa todo el ancho, centrada: marca el largo del título. */
+  .tag-top {
+    justify-self: stretch;
+    text-align: center;
+    letter-spacing: 0.1em;
+    font-size: 12px;
+    padding: 8px 6px;
+  }
+
+  /* ---- Compacto: que la ficha entera entre en la primera pantalla ---- */
+  .wrap:has(#s-create:not([hidden])) {
+    gap: 10px;
+  }
+
+  #s-create {
+    gap: 12px;
+  }
+
+  .form {
+    gap: 10px;
+    padding: 14px;
+  }
+
+  .f-head {
+    padding-bottom: 10px;
+  }
+
+  .f-head strong {
+    font-size: 22px;
+  }
+
+  .f-age {
+    font-size: 18px;
+    padding: 6px 12px;
+  }
+
+  .form label,
+  .form legend {
+    font-size: 13px;
+    gap: 4px;
+  }
+
+  input[type='text'],
+  select {
+    min-height: 44px;
+    padding: 9px 12px;
+  }
+
+  .seg {
+    gap: 6px;
+  }
+
+  .opt span {
+    min-height: 44px;
+    padding: 8px;
+  }
+
+  /* País y club lado a lado. */
+  .pair {
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  /* El aviso de clubes grandes: texto gris simple, sin recuadro. */
+  .tip {
+    display: block;
+    min-height: 0;
+    padding: 0;
+    border: 0;
+    background: none;
+    text-align: center;
+  }
+
+  .tip::before {
+    display: none;
+  }
+
+  .tip span {
+    padding: 0;
+    background: none;
+    color: var(--muted);
+    font-size: 13px;
+  }
+
+  /* Sin hueco reservado para el error: solo aparece si hay un error. */
+  .form > .err:empty {
+    display: none;
+  }
+
+  /* La descripción larga no se muestra en celular (solo en computadora). */
+  .intro .lede {
+    display: none;
+  }
+}
+
+/* ---------- Computadora: título a la izquierda, tarjeta a la derecha ---------- */
+@media (min-width: 900px) {
+  .wrap:has(#s-create:not([hidden])) {
+    max-width: 1180px;
+  }
+
+  #s-create {
+    display: grid;
+    grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+    align-items: center;
+    gap: 56px;
+    min-height: calc(100vh - 150px);
+  }
+
+  #s-create .hero {
+    font-size: clamp(64px, 7.4vw, 104px);
+  }
+
+  .lede {
+    font-size: 19px;
+    max-width: 34em;
+  }
+
+  /* La tarjeta pasa a dos columnas: campos a la izquierda y el recuadro
+     con forma de cancha a la derecha, a la altura de nacionalidad a club. */
+  .form {
+    grid-template-columns: minmax(0, 1fr) 200px;
+    column-gap: 20px;
+    padding: 24px;
+  }
+
+  .form > * {
+    grid-column: 1;
+  }
+
+  .form > .f-head,
+  .form > .btn,
+  .form > .err,
+  .form > label[for='in-name'] {
+    grid-column: 1 / -1;
+  }
+
+  .form > .tip {
+    grid-column: 2;
+    grid-row: 3 / span 3;
+    /* En computadora la cancha es vertical: línea de mitad horizontal. */
+    background:
+      linear-gradient(var(--tip-line), var(--tip-line)) center / 100% 2px no-repeat,
+      color-mix(in srgb, var(--accent) 12%, var(--surface));
+  }
+}
+
 /* =====================================================================
-   10. JUGADOR EN CARRERA
+   9. JUGADOR EN CARRERA
    Barra de arriba con nombre, edad y media.
    ===================================================================== */
 
@@ -543,7 +899,7 @@ fieldset {
 }
 
 /* =====================================================================
-   11. RULETA
+   10. RULETA
    La tarjeta central: título, ruleta, resultado y botones.
    ===================================================================== */
 
@@ -608,7 +964,7 @@ fieldset {
 }
 
 /* =====================================================================
-   12. ELECCIONES Y OFERTAS
+   11. ELECCIONES Y OFERTAS
    Tarjetas donde elegís algo: ofertas de contrato, eventos, entrenamiento.
    ===================================================================== */
 
@@ -653,7 +1009,7 @@ fieldset {
 }
 
 /* =====================================================================
-   13. REGISTRO DE PARTIDOS
+   12. REGISTRO DE PARTIDOS
    Lista de partidos jugados en copas y selección, debajo de la ruleta.
    ===================================================================== */
 
@@ -732,9 +1088,9 @@ fieldset {
 }
 
 /* =====================================================================
-   14. MINIJUEGO
+   13. MINIJUEGO
    Tiro libre, penal y partido clave. Los colores de la cancha y los
-   muñequitos están en las secciones 1 y 2 (--pitch y --kit-*).
+   muñequitos están en la sección 1 (--pitch y --kit-*).
    ===================================================================== */
 
 /* Contenedor del minijuego. */
@@ -765,7 +1121,7 @@ fieldset {
 }
 
 /* =====================================================================
-   15. VITRINA
+   14. VITRINA
    Lista de títulos ganados.
    ===================================================================== */
 
@@ -806,7 +1162,7 @@ fieldset {
 }
 
 /* =====================================================================
-   16. TOTALES E HISTORIAL
+   15. TOTALES E HISTORIAL
    ===================================================================== */
 
 /* Cuadrícula de totales (Partidos, Goles, Títulos, Ganancias). */
@@ -862,7 +1218,7 @@ th.n {
 }
 
 /* =====================================================================
-   17. FIN DE CARRERA
+   16. FIN DE CARRERA
    ===================================================================== */
 
 /* Cuadro de texto con el resumen para copiar. */
@@ -876,9 +1232,9 @@ th.n {
 }
 
 /* =====================================================================
-   18. NOTICIAS (pop-up con forma de diario)
+   17. NOTICIAS (pop-up con forma de diario)
    Colores: --paper (hoja), --paper-ink (letra), --paper-rule (líneas), --paper-red (etiqueta extra),
-   --news-scrim (velo oscuro de fondo). Están en las secciones 1 y 2.
+   --news-scrim (velo oscuro de fondo). Están en la sección 1.
    ===================================================================== */
 
 /* Velo que cubre toda la pantalla y centra la hoja. */

@@ -3882,6 +3882,7 @@ ${N[0]} ${sk.a || 0} · ${N[1]} ${sk.b || 0} · ${N[2]} ${sk.c || 0} · ${N[3]} 
     // al pasar de un paso al siguiente se queda donde estabas.
     const where = !G ? 'create' : G.phase;
     if (where !== lastWhere) window.scrollTo(0, 0);
+    if (!G) fitHero();
     lastWhere = where;
   }
   let lastWhere = null;
@@ -3975,6 +3976,28 @@ ${N[0]} ${sk.a || 0} · ${N[1]} ${sk.b || 0} · ${N[2]} ${sk.c || 0} · ${N[3]} 
   };
 
   /* ---------- formulario de creación ---------- */
+  /* Título de la portada en celular: agranda o achica la letra hasta que la línea
+     más larga ocupe justo el ancho del bloque (el mismo de la etiqueta verde). */
+  function fitHero() {
+    try {
+      const h = $('#s-create .hero'),
+        box = $('#s-create .intro');
+      if (!h || !box || typeof window.matchMedia !== 'function') return;
+      if (!window.matchMedia('(max-width: 899px)').matches) {
+        h.style.fontSize = '';
+        return;
+      }
+      if (!(box.clientWidth > 0)) return;
+      h.style.fontSize = '100px';
+      const w = Math.max(
+        ...[...h.querySelectorAll('.hl')].map((n) => n.getBoundingClientRect().width),
+      );
+      if (w > 0) h.style.fontSize = Math.floor((box.clientWidth / w) * 985) / 10 + 'px';
+    } catch (e) {}
+  }
+  window.addEventListener('resize', fitHero);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitHero);
+
   $('#in-nat').innerHTML = NATS.map((n) => `<option>${n}</option>`).join('');
   $('#in-nat').value = 'Argentina';
   $('#in-country').innerHTML = Object.keys(LG)

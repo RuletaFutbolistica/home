@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Carrera a la Ruleta</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;600&family=Big+Shoulders+Display:wght@800&family=Playfair+Display:wght@700;900&family=Source+Serif+4:wght@400;600&display=swap">
-<link rel="stylesheet" href="styles.css?v=4">
+<link rel="stylesheet" href="styles.css?v=6">
 </head>
 <body>
 <div class="wrap">
@@ -38,10 +38,13 @@
   </div>
 
   <section id="s-create">
-    <svg class="pitch" viewBox="0 0 400 120" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="396" height="116" rx="2"/><line x1="200" y1="2" x2="200" y2="118"/><circle cx="200" cy="60" r="26"/><circle cx="200" cy="60" r="2.5" fill="currentColor"/><rect x="2" y="30" width="48" height="60"/><rect x="2" y="46" width="18" height="28"/><rect x="350" y="30" width="48" height="60"/><rect x="380" y="46" width="18" height="28"/></svg>
-    <h2 class="hero">Arrancás a los 16.<br>La ruleta decide el resto.</h2>
-    <p class="lede">Tu media, tus goles, tus atajadas y tus contratos salen de girar. La carrera termina el día que dejan de llegar ofertas, tengas la edad que tengas.</p>
+    <div class="intro">
+      <p class="tag-top">Simulador de carrera futbolística web</p>
+      <h2 class="hero"><span class="hl">Arrancás a los 16.</span><br><span class="hl accent">La ruleta decide el resto.</span></h2>
+      <p class="lede">Un juego de simulación donde el azar determina cada hito de tu carrera profesional: estadísticas, contratos de club, goles, atajadas y premios. La carrera termina el día que dejan de llegar ofertas, tengas la edad que tengas.</p>
+    </div>
     <form id="f-create" class="form" novalidate>
+      <div class="f-head"><strong>Debutante</strong><span class="f-age">Edad: 16</span></div>
       <label for="in-name">Nombre del jugador<input id="in-name" type="text" maxlength="24" autocomplete="off" placeholder="Ej: Tomás Rivera"></label>
       <label for="in-nat">Nacionalidad<select id="in-nat"></select></label>
       <fieldset><legend>Posición</legend>
@@ -52,9 +55,9 @@
           <label class="opt"><input type="radio" name="pos" value="DEL" checked><span>Delantero</span></label>
         </div>
       </fieldset>
-      <label for="in-country">País donde empezás a jugar<select id="in-country"></select></label>
+      <label for="in-country">País donde debutás<select id="in-country"></select></label>
       <label for="in-club">Club<select id="in-club"></select></label>
-      <p class="note">Cuanto más grande el club, más difícil es ganarse un lugar a los 16.</p>
+      <div class="tip"><span>Cuanto más grande es el club debutante, más difícil es ganarte el puesto.</span></div>
       <p class="err" id="err" role="alert"></p>
       <button class="btn" type="submit">Firmar y debutar</button>
     </form>
@@ -107,6 +110,6 @@
     <textarea id="e-text" readonly rows="8" hidden aria-label="Resumen de la carrera"></textarea>
   </section>
 </div>
-<script src="game.js?v=4"></script>
+<script src="game.js?v=6"></script>
 </body>
 </html>

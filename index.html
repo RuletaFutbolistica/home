@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Carrera a la Ruleta</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;600&family=Big+Shoulders+Display:wght@800&family=Playfair+Display:wght@700;900&family=Source+Serif+4:wght@400;600&display=swap">
-<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="styles.css?v=4">
 </head>
 <body>
 <div class="wrap">
@@ -89,6 +89,7 @@
 
     <dl class="totals" id="totals"></dl>
     <div id="vit" class="vitwrap" hidden><h3 class="sec">Vitrina</h3><ul class="vit" id="vit-list"></ul></div>
+    <div id="aw-wrap" class="vitwrap" hidden><h3 class="sec">Premios individuales</h3><ul class="vit" id="aw-list"></ul></div>
     <h3 class="sec">Historial</h3>
     <div class="tablewrap"><table id="hist"></table></div>
   </section>
@@ -100,11 +101,12 @@
     <p class="verdict" id="e-verdict"></p>
     <dl class="totals" id="e-totals"></dl>
     <div id="e-vitwrap" class="vitwrap" hidden><h3 class="sec">Vitrina</h3><ul class="vit" id="e-vit"></ul></div>
+    <div id="e-awwrap" class="vitwrap" hidden><h3 class="sec">Premios individuales</h3><ul class="vit" id="e-aw"></ul></div>
     <div class="tablewrap"><table id="e-hist"></table></div>
     <div class="actions" style="justify-content:flex-start"><button class="btn" id="e-copy" type="button">Copiar resumen</button><button class="btn ghost" id="e-new" type="button">Nueva carrera</button></div>
     <textarea id="e-text" readonly rows="8" hidden aria-label="Resumen de la carrera"></textarea>
   </section>
 </div>
-<script src="game.js"></script>
+<script src="game.js?v=4"></script>
 </body>
 </html>

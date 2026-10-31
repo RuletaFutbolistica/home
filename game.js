@@ -530,6 +530,8 @@
     G.caps = G.caps || 0;
     G.ntg = G.ntg || 0;
     G.nta = G.nta || 0;
+    G.aw = G.aw || [];
+    G.tot.aw = G.tot.aw || 0;
     G.form = G.form || 0;
     if (G.queue) {
       G.queue = G.queue.flatMap((q) =>
@@ -541,7 +543,9 @@
               ? ['contstart']
               : q === 'ntres'
                 ? []
-                : [q],
+                : q === 'award'
+                  ? ['awards']
+                  : [q],
       );
     }
     if (G.cur && ['team', 'ntres', 'cup', 'contin'].includes(G.cur.id)) {
@@ -700,7 +704,7 @@
     q.push('league', 'cupstart');
     if (G.contQ) q.push('contstart');
     if (G.ovr >= natThr() - 12) q.push('natl');
-    if (G.ovr >= 83) q.push('award');
+    q.push('awards');
     q.push('progress');
     return q;
   }
@@ -1437,16 +1441,15 @@
           ],
         };
       }
-      case 'award': {
-        const bdo = ov >= 89 ? (ov >= 94 ? 2 : 1) : 0,
-          xi = clamp(Math.round(3 + (ov - 83) * 0.7), 3, 10);
+      case 'aw': {
+        const a = g.awq[0];
         return {
-          t: 'Ruleta de premios',
-          h: 'Con tu nivel, los premios individuales entran en juego.',
+          t: 'Gala de premios',
+          h: `Nominado a: ${a.n}. ${a.why}`,
+          min: true,
           e: [
-            { l: 'Mejor del mundo', v: 'bdo', w: bdo },
-            { l: 'Equipo ideal', v: 'xi', w: xi },
-            { l: 'Nada', v: 'no', w: 20 - bdo - xi },
+            { l: '¡Lo ganás!', v: 1, w: a.p * 100 },
+            { l: 'No esta vez', v: 0, w: (1 - a.p) * 100 },
           ],
         };
       }
@@ -1766,6 +1769,8 @@
           parts.push(ri(1, 6) + ' atajadas');
         } else parts.push('sin minutos de peso');
         g.caps++;
+        nt.tg = (nt.tg || 0) + myG;
+        nt.tcs = (nt.tcs || 0) + (gk && m.start && ga === 0 ? 1 : 0);
         g.ntg += myG;
         g.nta += myA;
         nt.pts += res === 'w' ? 3 : res === 'd' ? 1 : 0;
@@ -1797,18 +1802,32 @@
         g.pb = 0;
         g.penSeen = false;
         if (more) g.queue.splice(g.qi + 1, 0, 'ntm');
-        else g.nt = null;
+        else {
+          if (nt.kind !== 'fr')
+            s.nres = {
+              kind: nt.kind,
+              comp: nt.comp,
+              champ: res !== 'l' && i === nt.st.length - 1 && i >= 3,
+              deep: i >= 3 ? i - 3 : -1, // 0 octavos/cuartos ... 3 final
+              tg: nt.tg || 0,
+              tcs: nt.tcs || 0,
+            };
+          g.nt = null;
+        }
         return `${res === 'w' ? 'Victoria' : res === 'l' ? 'Derrota' : 'Empate'} ${gf}-${ga} vs ${m.opp}${pens}. ${m.start ? 'Titular' : 'Suplente'}: ${parts.join(', ')}.${tail}`;
       }
-      case 'award':
-        if (sl.v === 'bdo') {
-          g.tot.bdo++;
-          s.award = 'Mejor del mundo';
-        } else if (sl.v === 'xi') {
-          g.tot.xi++;
-          s.award = 'Equipo ideal';
-        }
-        return sl.v === 'no' ? 'Sin premios este año' : s.award;
+      case 'aw': {
+        const a = g.awq.shift();
+        g.lastAw = null;
+        if (!sl.v) return `No ganaste el ${a.n}.`;
+        g.aw.push({ n: a.n, y: seasonLabel(g.year), club: g.club.n, tier: a.tier });
+        g.tot.aw = (g.tot.aw || 0) + 1;
+        if (a.k === 'bdo') g.tot.bdo++;
+        if (a.k === 'xi') g.tot.xi++;
+        s.award = (s.award ? s.award + ' · ' : '') + a.n;
+        g.lastAw = a;
+        return `¡Ganaste: ${a.n}!`;
+      }
       case 'progress': {
         const b = g.ovr,
           d = sl.v,
@@ -2110,6 +2129,13 @@
         'Una chance clave se escapó en el clásico ante {rival}. {name} dejó la cancha en silencio.',
       ],
     ],
+    premio: [
+      [
+        '¡{name} ganó el premio: {premio}!',
+        'Una noche de gala para el crack.',
+        'En la ceremonia, {name} recibió el galardón "{premio}". Los flashes fueron para él y el fútbol entero lo aplaudió.',
+      ],
+    ],
     natl_wc: [
       [
         '¡{name} fue convocado al Mundial con {nat}!',
@@ -2212,6 +2238,10 @@
       return go(ok ? 'clasico_ok' : 'clasico_mal', true, { rival: g.rival || randClub(true) });
     }
 
+    // Premios individuales importantes (continentales y mundiales).
+    if (id === 'aw' && sl.v && g.lastAw && g.lastAw.tier >= 2)
+      return go('premio', true, { premio: g.lastAw.n });
+
     // Títulos: los más importantes.
     if (g.trophies.length > tb && major) {
       const t = g.trophies[g.trophies.length - 1];
@@ -2264,6 +2294,399 @@
     next();
   }
 
+  /* ---------- premios individuales ----------
+   Al final de la temporada nominations() arma la lista de premios a los que llegás según tus
+   números, tu rol, tu media, el título de tu equipo y tu edad. Cada nominación es una ruleta
+   de dos porciones (ganás / no ganás) cuyo tamaño es la probabilidad p.
+   tier: 1 = premio de tu liga, 2 = continental o regional, 3 = mundial. */
+  const LGS = {
+    'España': 1,
+    'Inglaterra': 1,
+    'Italia': 0.95,
+    'Alemania': 1,
+    'Francia': 0.85,
+    'Portugal': 0.7,
+    'Países Bajos': 0.7,
+    'Turquía': 0.65,
+    'Brasil': 0.7,
+    'Argentina': 0.6,
+    'Uruguay': 0.45,
+    'Colombia': 0.5,
+    'México': 0.6,
+    'Estados Unidos': 0.6,
+    'Arabia Saudita': 0.6,
+    'Japón': 0.55,
+  };
+  // Nombres reales de los premios de cada liga: s goleador, a asistidor, m mejor jugador,
+  // y mejor joven, k mejor arquero.
+  const AWN = {
+    'Argentina': {
+      s: 'Goleador de la Liga Profesional',
+      m: 'Mejor jugador de la Liga Profesional',
+      y: 'Mejor joven de la Liga Profesional',
+      k: 'Mejor arquero de la Liga Profesional',
+    },
+    'España': {
+      s: 'Trofeo Pichichi',
+      a: 'Máximo asistidor de LaLiga',
+      m: 'Trofeo Alfredo Di Stéfano (mejor jugador de LaLiga)',
+      y: 'Mejor jugador joven de LaLiga',
+      k: 'Trofeo Zamora',
+    },
+    'Inglaterra': {
+      s: 'Bota de Oro de la Premier League',
+      a: 'Premier League Playmaker',
+      m: 'Jugador de la temporada de la Premier League',
+      y: 'Jugador joven de la temporada de la Premier League',
+      k: 'Guante de Oro de la Premier League',
+    },
+    'Italia': {
+      s: 'Capocannoniere de la Serie A',
+      a: 'Máximo asistidor de la Serie A',
+      m: 'Mejor jugador de la Serie A',
+      y: 'Mejor joven de la Serie A',
+      k: 'Mejor arquero de la Serie A',
+    },
+    'Alemania': {
+      s: 'Torjägerkanone (cañón del goleador)',
+      a: 'Máximo asistidor de la Bundesliga',
+      m: 'Jugador del año de la Bundesliga',
+      y: 'Mejor joven de la Bundesliga',
+      k: 'Mejor arquero de la Bundesliga',
+    },
+    'Francia': {
+      s: 'Máximo goleador de la Ligue 1 (Trophées UNFP)',
+      a: 'Máximo asistidor de la Ligue 1',
+      m: 'Mejor jugador de la Ligue 1 (Trophées UNFP)',
+      y: 'Mejor joven de la Ligue 1 (Trophées UNFP)',
+      k: 'Mejor arquero de la Ligue 1 (Trophées UNFP)',
+    },
+    'Portugal': {
+      s: 'Bola de Prata (goleador de la Primeira Liga)',
+      a: 'Máximo asistidor de la Primeira Liga',
+      m: 'Jugador del año de la Primeira Liga',
+      y: 'Mejor joven de la Primeira Liga',
+      k: 'Mejor arquero de la Primeira Liga',
+    },
+    'Países Bajos': {
+      s: 'Máximo goleador de la Eredivisie',
+      a: 'Máximo asistidor de la Eredivisie',
+      m: 'Gouden Schoen (mejor jugador de la Eredivisie)',
+      y: 'Talento del año de la Eredivisie',
+      k: 'Mejor arquero de la Eredivisie',
+    },
+    'Turquía': {
+      s: 'Gol Kralı (rey del gol de la Süper Lig)',
+      a: 'Máximo asistidor de la Süper Lig',
+      m: 'Jugador del año de la Süper Lig',
+      y: 'Mejor joven de la Süper Lig',
+      k: 'Mejor arquero de la Süper Lig',
+    },
+    'Brasil': {
+      s: 'Artilheiro do Brasileirão',
+      a: 'Máximo asistidor del Brasileirão',
+      m: 'Craque do Brasileirão',
+      y: 'Revelación del Brasileirão',
+      k: 'Luva de Ouro del Brasileirão',
+    },
+    'Uruguay': {
+      s: 'Goleador del Campeonato Uruguayo',
+      m: 'Mejor jugador del Campeonato Uruguayo',
+      y: 'Mejor joven del Campeonato Uruguayo',
+      k: 'Mejor arquero del Campeonato Uruguayo',
+    },
+    'Colombia': {
+      s: 'Goleador de la Liga colombiana',
+      m: 'Mejor jugador de la Liga colombiana',
+      y: 'Mejor joven de la Liga colombiana',
+      k: 'Mejor arquero de la Liga colombiana',
+    },
+    'México': {
+      s: 'Campeón de goleo de la Liga MX',
+      a: 'Máximo asistidor de la Liga MX',
+      m: 'Balón de Oro de la Liga MX',
+      y: 'Mejor joven de la Liga MX',
+      k: 'Guante de Oro de la Liga MX',
+    },
+    'Estados Unidos': {
+      s: 'Bota de Oro de la MLS',
+      a: 'Premio al máximo asistidor de la MLS',
+      m: 'MVP de la MLS',
+      y: 'Novato del año de la MLS',
+      k: 'Arquero del año de la MLS',
+    },
+    'Arabia Saudita': {
+      s: 'Bota de Oro de la Saudi Pro League',
+      m: 'Jugador del año de la Saudi Pro League',
+      y: 'Mejor joven de la Saudi Pro League',
+      k: 'Guante de Oro de la Saudi Pro League',
+    },
+    'Japón': {
+      s: 'Máximo goleador de la J1 League',
+      m: 'MVP de la J1 League',
+      y: 'Premio Nuevo Héroe de la J1 League',
+      k: 'Mejor arquero de la J1 League',
+    },
+  };
+  const lz = (x) => 1 / (1 + Math.exp(-x));
+
+  function nominations() {
+    const g = G,
+      s = g.s,
+      gk = g.pos === 'POR',
+      ov = g.ovr,
+      c = g.club.c,
+      L = LGS[c] || 0.6,
+      lg = CMP[c][0],
+      conf = CMP[c][2],
+      N = AWN[c] || {},
+      gp = s.games,
+      ex = s.ex || {},
+      ct = s.ct || '',
+      clWon = ct === 'Campeón: Champions League',
+      libWon = ct === 'Campeón: Copa Libertadores',
+      nres = s.nres,
+      wc = nres && nres.kind === 'wc',
+      out = [];
+
+    // Rendimiento contra lo esperable para tu media (0 = normal, + = gran temporada).
+    const ratios = [];
+    if (gk) {
+      if (ex.sv > 0) ratios.push(s.sv / ex.sv);
+      if (ex.cs > 0) ratios.push((s.cs + 1) / (ex.cs + 1));
+    } else {
+      if (ex.g > 0.5) ratios.push((s.g + 1) / (ex.g + 1));
+      if (ex.a > 0.5) ratios.push((s.a + 1) / (ex.a + 1));
+    }
+    const perf = ratios.length
+      ? clamp(Math.log(ratios.reduce((a, b) => a + b, 0) / ratios.length), -0.6, 0.9)
+      : 0;
+
+    const add = (k, n, p, tier, why) => {
+      if (p >= 0.08) out.push({ k, n, p: Math.min(0.92, p), tier, why });
+    };
+    const played = gp >= 15 && s.role !== 'Lesión';
+
+    if (played) {
+      // --- tu liga ---
+      if (!gk) {
+        add(
+          'top_g',
+          N.s || `Máximo goleador de la ${lg}`,
+          lz((s.g - (14 + 11 * L)) / 2.6),
+          1,
+          `Terminaste con ${s.g} goles en la temporada.`,
+        );
+        add(
+          'top_a',
+          N.a || `Máximo asistidor de la ${lg}`,
+          lz((s.a - (9 + 7 * L)) / 2),
+          1,
+          `Terminaste con ${s.a} asistencias.`,
+        );
+      } else {
+        add(
+          'gk',
+          N.k || `Mejor arquero de la ${lg}`,
+          lz((s.cs - (9 + 4 * L)) / 2.6 + (ov - (64 + 14 * L)) / 10),
+          1,
+          `${s.cs} vallas invictas y ${s.sv} atajadas.`,
+        );
+      }
+      const mvp =
+        (ov - (64 + 14 * L)) / 4 +
+        (s.pos === 1 ? 1 : s.pos <= 3 ? 0.4 : 0) +
+        (s.role === 'Figura' ? 0.6 : 0) +
+        perf * 1.5;
+      add(
+        'mvp',
+        N.m || `Mejor jugador de la ${lg}`,
+        lz(mvp - 2.6),
+        1,
+        'Tu temporada te puso entre los mejores del campeonato.',
+      );
+      if (g.age <= 21)
+        add(
+          'young',
+          N.y || `Mejor joven de la ${lg}`,
+          lz((ov - (56 + 11 * L)) / 3.2 + perf - 0.5),
+          1,
+          'Sos de los jóvenes que más se destacaron.',
+        );
+
+      // --- Europa ---
+      if (conf === 'E') {
+        if (!gk) {
+          const pts = s.g * (L >= 0.85 ? 2 : 1.5);
+          add(
+            'golden_shoe',
+            'Bota de Oro europea',
+            lz((pts - 50) / 4.5),
+            2,
+            `${s.g} goles en ${lg} (puntúan doble en las 5 grandes ligas).`,
+          );
+        }
+        if (ov >= 84)
+          add(
+            'uefa',
+            'Mejor jugador de la UEFA',
+            lz((ov - 90) / 2.2 + (clWon ? 1.8 : 0) + perf - 1.8),
+            2,
+            clWon ? 'Ganaste la Champions League.' : 'Brillaste en Europa.',
+          );
+      }
+      if (conf === 'S' && ov >= 74)
+        add(
+          'rey',
+          'Rey de América (mejor jugador de Sudamérica)',
+          lz((ov - 82) / 2.5 + (libWon ? 1.6 : 0) + (s.pos === 1 ? 0.6 : 0) + perf - 1.2),
+          2,
+          'Tu año en Sudamérica no pasó desapercibido.',
+        );
+      if (REGN['Copa Africana de Naciones'].includes(g.nat) && ov >= 78)
+        add(
+          'caf',
+          'Jugador africano del año (CAF)',
+          lz((ov - 84) / 2.5 + (clWon ? 0.5 : 0) + perf * 0.8 - 1.4),
+          2,
+          'El continente africano mira tu temporada.',
+        );
+      if (REGN['Copa Asiática'].includes(g.nat) && ov >= 72)
+        add(
+          'afc',
+          'Jugador asiático del año (AFC)',
+          lz((ov - 78) / 2.5 + perf * 0.8 - 1.2),
+          2,
+          'Asia te tiene entre sus candidatos.',
+        );
+      if (REGN['Copa Oro'].includes(g.nat) && ov >= 74)
+        add(
+          'concacaf',
+          'Jugador del año de la Concacaf',
+          lz((ov - 80) / 2.5 + perf * 0.8 - 1.2),
+          2,
+          'Concacaf te nominó como uno de los mejores.',
+        );
+
+      // --- jóvenes del mundo ---
+      if (g.age <= 21 && ov >= 68) {
+        add(
+          'kopa',
+          'Trofeo Kopa (mejor jugador sub-21)',
+          lz((ov - 76) / 2.5 + perf - 0.8),
+          3,
+          'Entre los mejores menores de 21 del planeta.',
+        );
+        if (conf === 'E')
+          add(
+            'golden_boy',
+            'Golden Boy',
+            lz((ov - 74) / 2.5 + perf - 0.6),
+            2,
+            'La mejor joya del fútbol europeo.',
+          );
+      }
+
+      // --- mundiales ---
+      if (ov >= 83) {
+        const xiP = clamp(0.12 + (ov - 83) * 0.045, 0.1, 0.8);
+        add('xi', 'Equipo ideal mundial (FIFPRO)', xiP, 3, 'Por tu nivel, estás en la lista.');
+      }
+      if (ov >= 85) {
+        const base =
+          (ov - 90) / 2.2 + (clWon ? 1.2 : 0) + (wc && nres.champ ? 1.5 : 0) + perf * 0.8;
+        add(
+          'bdo',
+          'Balón de Oro',
+          lz(base - 3.0),
+          3,
+          'Estás entre los candidatos al mejor del mundo.',
+        );
+        add(
+          'best',
+          'The Best FIFA',
+          lz(base - 2.6),
+          3,
+          'El mundo del fútbol votó: estás nominado.',
+        );
+      }
+      if (gk && ov >= 82)
+        add(
+          'yashin',
+          'Trofeo Yashin (mejor arquero del mundo)',
+          lz((ov - 86) / 2.2 + (clWon ? 1 : 0) + (s.cs - 14) / 6 - 1.6),
+          3,
+          `${s.cs} vallas invictas en la temporada.`,
+        );
+      if (!gk && s.g >= 28)
+        add(
+          'gerd',
+          'Trofeo Gerd Müller (goleador del año)',
+          lz((s.g - 36) / 3),
+          3,
+          `${s.g} goles en la temporada.`,
+        );
+    }
+
+    // --- torneos de selección de este año ---
+    if (nres) {
+      const comp = nres.comp;
+      if (wc) {
+        add(
+          'wc_ball',
+          'Balón de Oro del Mundial',
+          lz((ov - 80) / 3 + (nres.champ ? 1.6 : 0) + nres.tg / 3 - 2.4),
+          3,
+          nres.champ ? '¡Campeón del mundo!' : 'Hiciste un gran Mundial.',
+        );
+        if (!gk)
+          add(
+            'wc_boot',
+            'Bota de Oro del Mundial',
+            lz((nres.tg - 5) / 1.2),
+            3,
+            `${nres.tg} goles en el Mundial.`,
+          );
+        else
+          add(
+            'wc_glove',
+            'Guante de Oro del Mundial',
+            lz((nres.tcs - 2.5) / 1 + (nres.champ ? 1 : 0) - 0.5),
+            3,
+            `${nres.tcs} vallas invictas en el Mundial.`,
+          );
+        if (g.age <= 21)
+          add(
+            'wc_young',
+            'Mejor jugador joven del Mundial',
+            lz((ov - 70) / 3 + nres.deep / 2 - 0.5),
+            3,
+            'La revelación del torneo.',
+          );
+      } else {
+        add(
+          'nt_mvp',
+          `Mejor jugador de la ${comp}`,
+          lz((ov - 78) / 3 + (nres.champ ? 1.4 : 0) + nres.tg / 4 - 2.2),
+          2,
+          nres.champ ? '¡Campeón con tu selección!' : 'Gran torneo con tu selección.',
+        );
+        if (!gk)
+          add(
+            'nt_boot',
+            `Goleador de la ${comp}`,
+            lz((nres.tg - 4) / 1.2),
+            2,
+            `${nres.tg} goles en el torneo.`,
+          );
+      }
+    }
+
+    // Máximo 5 premios por temporada: los más importantes; se muestran de menor a mayor.
+    out.sort((a, b) => b.tier - a.tier || b.p - a.p);
+    return out.slice(0, 5).sort((a, b) => a.tier - b.tier || a.p - b.p);
+  }
+
   function genOffers(k) {
     const g = G,
       cur = ALL.find((c) => c.n === g.club.n),
@@ -2293,6 +2716,11 @@
   function showStep() {
     if (G.qi >= G.queue.length) return afterQueue();
     const id = G.queue[G.qi];
+    if (id === 'awards') {
+      G.awq = nominations();
+      G.queue.splice(G.qi, 1, ...G.awq.map(() => 'aw'));
+      return showStep();
+    }
     if (id === 'cupstart' || id === 'contstart') {
       if (G.s.role === 'Lesión') {
         G.qi++;
@@ -2454,7 +2882,13 @@
     }
     G.qi++;
     showStep();
+    const y = window.scrollY;
     render();
+    // Al pasar de un paso a otro te quedás donde estabas (no vuelve arriba).
+    if (G.phase !== 'choose' && G.phase !== 'ended') {
+      window.scrollTo(0, y);
+      requestAnimationFrame(() => window.scrollTo(0, y));
+    }
   }
 
   function choose(i) {
@@ -2509,7 +2943,8 @@
       contract: null,
       earn: 0,
       hist: [],
-      tot: { pj: 0, g: 0, a: 0, sv: 0, cs: 0, lg: 0, cup: 0, cont: 0, bdo: 0, xi: 0 },
+      tot: { pj: 0, g: 0, a: 0, sv: 0, cs: 0, lg: 0, cup: 0, cont: 0, bdo: 0, xi: 0, aw: 0 },
+      aw: [],
       s: blankS(),
       trust: 0,
       stam: 0,
@@ -3186,6 +3621,19 @@
       )
       .join('');
   }
+  function awHTML() {
+    const m = new Map();
+    (G.aw || []).forEach((a) => {
+      if (!m.has(a.n)) m.set(a.n, { n: a.n, ys: [] });
+      m.get(a.n).ys.push(a.y);
+    });
+    return [...m.values()]
+      .map(
+        (o) =>
+          `<li><strong>${esc(o.n)}</strong><b class="x">×${o.ys.length}</b><span>${esc(o.ys.slice(-8).join(', '))}</span></li>`,
+      )
+      .join('');
+  }
   const esc = (s) =>
     String(s).replace(
       /[&<>"]/g,
@@ -3197,7 +3645,7 @@
     const T = G.tot,
       gk = isGK(),
       titles = (G.trophies || []).length,
-      aw = T.bdo + T.xi;
+      aw = T.aw || T.bdo + T.xi;
     const r = [
       ['Partidos', T.pj],
       [gk ? 'Atajadas' : 'Goles', gk ? T.sv : T.g],
@@ -3287,6 +3735,9 @@ ${N[0]} ${sk.a || 0} · ${N[1]} ${sk.b || 0} · ${N[2]} ${sk.c || 0} · ${N[3]} 
     const hasV = (G.trophies || []).length > 0;
     $('#vit').hidden = !hasV;
     if (hasV) $('#vit-list').innerHTML = vitHTML();
+    const hasA = (G.aw || []).length > 0;
+    $('#aw-wrap').hidden = !hasA;
+    if (hasA) $('#aw-list').innerHTML = awHTML();
     if (isEv && !choosing) {
       $('#st-title').textContent = c.t;
       $('#st-hint').textContent = c.h;
@@ -3364,6 +3815,18 @@ ${N[0]} ${sk.a || 0} · ${N[1]} ${sk.b || 0} · ${N[2]} ${sk.c || 0} · ${N[3]} 
     return 'Jugador de ascenso';
   }
 
+  function awardsLine(g) {
+    const cnt = {};
+    (g.aw || []).forEach((a) => {
+      cnt[a.n] = (cnt[a.n] || 0) + 1;
+    });
+    const l = Object.keys(cnt)
+      .sort((a, b) => cnt[b] - cnt[a])
+      .slice(0, 8)
+      .map((k) => (cnt[k] > 1 ? `${k} x${cnt[k]}` : k));
+    return l.length ? l.join(', ') : 'ninguno';
+  }
+
   function summary() {
     const g = G,
       T = g.tot,
@@ -3382,7 +3845,7 @@ ${N[0]} ${sk.a || 0} · ${N[1]} ${sk.b || 0} · ${N[2]} ${sk.c || 0} · ${N[3]} 
       verdict(),
       `${g.hist.length} temporadas en ${clubs.length} ${clubs.length === 1 ? 'club' : 'clubs'}; se retiró a los ${g.age} años.`,
       `Media máxima: ${g.peak}. Partidos: ${T.pj}. ${gk ? `Atajadas: ${T.sv}. Vallas invictas: ${T.cs}.` : `Goles: ${T.g}. Asistencias: ${T.a}.`}`,
-      `Títulos (${tt}): ${vit || 'ninguno'}. Premios: ${T.bdo + T.xi}.`,
+      `Títulos (${tt}): ${vit || 'ninguno'}. Premios (${T.aw || T.bdo + T.xi}): ${awardsLine(g)}.`,
       g.caps
         ? `Selección de ${g.nat}: ${g.caps} partidos${gk ? '' : `, ${g.ntg} goles y ${g.nta || 0} asistencias`}.`
         : `Nunca jugó en la selección.`,
@@ -3403,6 +3866,9 @@ ${N[0]} ${sk.a || 0} · ${N[1]} ${sk.b || 0} · ${N[2]} ${sk.c || 0} · ${N[3]} 
     const hv = G.trophies.length > 0;
     $('#e-vitwrap').hidden = !hv;
     if (hv) $('#e-vit').innerHTML = vitHTML();
+    const ha = (G.aw || []).length > 0;
+    $('#e-awwrap').hidden = !ha;
+    if (ha) $('#e-aw').innerHTML = awHTML();
   }
 
   function render() {

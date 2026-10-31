@@ -1,1 +1,0 @@
-# Ruleta_Futbol-stica

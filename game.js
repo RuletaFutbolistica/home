@@ -531,6 +531,7 @@
     G.ntg = G.ntg || 0;
     G.nta = G.nta || 0;
     G.aw = G.aw || [];
+    G.rc = G.rc || 0;
     G.tot.aw = G.tot.aw || 0;
     G.form = G.form || 0;
     if (G.queue) {
@@ -626,6 +627,7 @@
     bg: 0,
     bs: 0,
     nw: 0,
+    awb: 0,
     lg: '',
     cp: '',
     ct: '',
@@ -1361,16 +1363,19 @@
                 : 2,
         );
         ct.used.push(opp.n);
+        // Tu fuerza: nivel del club + tu media + el momento + tu temporada.
         const me =
             LV[t] +
-            (ov - LV[t]) * 0.25 +
-            (g.form || 0) * 1.2 +
-            (sk.d + sk.e) * 0.2 +
+            (ov - LV[t]) * 0.45 +
+            (g.form || 0) * 1.5 +
+            (sk.d + sk.e) * 0.25 +
+            seasonPerf() * 4 +
             (g.pb || 0) * 7,
-          so = LV[opp.t] + ri(-3, 3) + (ko ? Math.max(0, ki) * 0.7 : 0),
+          so = LV[opp.t] + ri(-3, 3) + (ko ? Math.max(0, ki) * 0.5 : 0),
           d = me - so;
-        const pd = (ko ? 0.2 : 0.22) * Math.exp(-Math.pow(d / 12, 2)),
-          pw = (1 - pd) * SG(d / 6),
+        // En un partido de copa hay mucha más sorpresa que en la liga.
+        const pd = (ko ? 0.26 : 0.24) * Math.exp(-Math.pow(d / 16, 2)),
+          pw = (1 - pd) * SG(d / 9.5),
           pl = Math.max(0, 1 - pd - pw);
         const rp = { Figura: 0.97, Titular: 0.93, Rotación: 0.6, Suplente: 0.25 }[g.s.role],
           start = rnd() < (rp == null ? 0.5 : rp);
@@ -1425,9 +1430,9 @@
         const opp = pool[ri(0, pool.length - 1)],
           So = SS[NT(opp)] + ri(-3, 3),
           St = SS[NT(g.nat)],
-          d = St + (ov - St) * 0.12 - So + (g.pb || 0) * 7;
-        const pd = (ko ? 0.2 : 0.22) * Math.exp(-Math.pow(d / 12, 2)),
-          pw = (1 - pd) * SG(d / 6),
+          d = St + (ov - St) * 0.2 - So + seasonPerf() * 3 + (g.pb || 0) * 7;
+        const pd = (ko ? 0.26 : 0.24) * Math.exp(-Math.pow(d / 16, 2)),
+          pw = (1 - pd) * SG(d / 9.5),
           pl = Math.max(0, 1 - pd - pw);
         const start = rnd() < clamp(SG((ov - natThr() + 3) / 4), 0.1, 0.97);
         nt.m = { opp, start, d };
@@ -1462,9 +1467,15 @@
           else if (room < 3) mu = Math.min(mu, 1);
           else if (room > 10) mu += 0.6;
         }
+        // Tu temporada también mueve la media: un año enorme (goles, premios) puede romper el
+        // techo del potencial; un año muy flojo, jugando bastante, la baja.
+        const played = clamp(g.s.games / 30, 0, 1),
+          headroom = clamp((97 - ov) / 20, 0.15, 1), // cuanto más alta la media, más cuesta subir
+          boost = (seasonPerf() * 1.6 * played + Math.min(2.5, g.s.awb || 0)) * headroom;
+        mu = clamp(mu + boost, -4, 9);
         const sg = g.age < 24 ? 1.8 : 1.5,
           e = [];
-        for (let d = -5; d <= 7; d++)
+        for (let d = -5; d <= 10; d++)
           e.push({
             l: (d > 0 ? '+' : '') + d,
             v: d,
@@ -1473,11 +1484,16 @@
         return {
           t: 'Ruleta de evolución',
           h:
-            g.age < 24
+            (g.age < 24
               ? 'Todavía estás creciendo.'
               : g.age < 30
                 ? 'Estás en tu mejor momento.'
-                : 'El físico empieza a pesar.',
+                : 'El físico empieza a pesar.') +
+            (boost > 1.2
+              ? ' Tu gran temporada te impulsa.'
+              : boost < -1
+                ? ' Tu temporada pesa.'
+                : ''),
           e,
         };
       }
@@ -1715,6 +1731,8 @@
         };
         g.ntlog = [];
         g.ntT = g.nat + ' · ' + comp;
+        g.rc = 1; // un reintento propio para este torneo de selección
+        g.rcn = comp;
         g.queue.splice(g.qi + 1, 0, 'ntm');
         return kind === 'fr'
           ? `Convocado para ${n} amistosos con ${g.nat}`
@@ -1821,6 +1839,7 @@
         g.lastAw = null;
         if (!sl.v) return `No ganaste el ${a.n}.`;
         g.aw.push({ n: a.n, y: seasonLabel(g.year), club: g.club.n, tier: a.tier });
+        s.awb = (s.awb || 0) + [0, 0.4, 0.7, 1.0][a.tier]; // los premios suman a tu evolución
         g.tot.aw = (g.tot.aw || 0) + 1;
         if (a.k === 'bdo') g.tot.bdo++;
         if (a.k === 'xi') g.tot.xi++;
@@ -1893,6 +1912,8 @@
     };
     g.ntlog = [];
     g.ntT = name;
+    g.rc = 1; // un reintento propio para esta copa
+    g.rcn = name;
   }
 
   function applyPenal(res) {
@@ -2430,6 +2451,23 @@
   };
   const lz = (x) => 1 / (1 + Math.exp(-x));
 
+  /* Rendimiento de la temporada contra lo esperable para tu media:
+     0 = normal, positivo = gran temporada, negativo = floja. Va de -0.6 a 0.9. */
+  function seasonPerf() {
+    const g = G,
+      s = g.s,
+      ex = s.ex || {},
+      r = [];
+    if (g.pos === 'POR') {
+      if (ex.sv > 0) r.push(s.sv / ex.sv);
+      if (ex.cs > 0) r.push((s.cs + 1) / (ex.cs + 1));
+    } else {
+      if (ex.g > 0.5) r.push((s.g + 1) / (ex.g + 1));
+      if (ex.a > 0.5) r.push((s.a + 1) / (ex.a + 1));
+    }
+    return r.length ? clamp(Math.log(r.reduce((a, b) => a + b, 0) / r.length), -0.6, 0.9) : 0;
+  }
+
   function nominations() {
     const g = G,
       s = g.s,
@@ -2449,21 +2487,10 @@
       wc = nres && nres.kind === 'wc',
       out = [];
 
-    // Rendimiento contra lo esperable para tu media (0 = normal, + = gran temporada).
-    const ratios = [];
-    if (gk) {
-      if (ex.sv > 0) ratios.push(s.sv / ex.sv);
-      if (ex.cs > 0) ratios.push((s.cs + 1) / (ex.cs + 1));
-    } else {
-      if (ex.g > 0.5) ratios.push((s.g + 1) / (ex.g + 1));
-      if (ex.a > 0.5) ratios.push((s.a + 1) / (ex.a + 1));
-    }
-    const perf = ratios.length
-      ? clamp(Math.log(ratios.reduce((a, b) => a + b, 0) / ratios.length), -0.6, 0.9)
-      : 0;
+    const perf = seasonPerf();
 
     const add = (k, n, p, tier, why) => {
-      if (p >= 0.08) out.push({ k, n, p: Math.min(0.92, p), tier, why });
+      if (p >= 0.1) out.push({ k, n, p: Math.min(0.92, p), tier, why });
     };
     const played = gp >= 15 && s.role !== 'Lesión';
 
@@ -2497,7 +2524,7 @@
         (ov - (64 + 14 * L)) / 4 +
         (s.pos === 1 ? 1 : s.pos <= 3 ? 0.4 : 0) +
         (s.role === 'Figura' ? 0.6 : 0) +
-        perf * 1.5;
+        perf * 2;
       add(
         'mvp',
         N.m || `Mejor jugador de la ${lg}`,
@@ -2505,11 +2532,11 @@
         1,
         'Tu temporada te puso entre los mejores del campeonato.',
       );
-      if (g.age <= 21)
+      if (g.age <= 21 && perf > -0.25)
         add(
           'young',
           N.y || `Mejor joven de la ${lg}`,
-          lz((ov - (56 + 11 * L)) / 3.2 + perf - 0.5),
+          lz((ov - (62 + 6 * L)) / 4 + perf * 2.2 - 1.8),
           1,
           'Sos de los jóvenes que más se destacaron.',
         );
@@ -2520,7 +2547,7 @@
           const pts = s.g * (L >= 0.85 ? 2 : 1.5);
           add(
             'golden_shoe',
-            'Bota de Oro europea',
+            'Bota de Oro',
             lz((pts - 50) / 4.5),
             2,
             `${s.g} goles en ${lg} (puntúan doble en las 5 grandes ligas).`,
@@ -2569,11 +2596,11 @@
         );
 
       // --- jóvenes del mundo ---
-      if (g.age <= 21 && ov >= 68) {
+      if (g.age <= 21 && ov >= 58 && perf > -0.25) {
         add(
           'kopa',
           'Trofeo Kopa (mejor jugador sub-21)',
-          lz((ov - 76) / 2.5 + perf - 0.8),
+          lz((ov - 66) / 4 + perf * 1.8 - 2.2),
           3,
           'Entre los mejores menores de 21 del planeta.',
         );
@@ -2581,7 +2608,7 @@
           add(
             'golden_boy',
             'Golden Boy',
-            lz((ov - 74) / 2.5 + perf - 0.6),
+            lz((ov - 64) / 4 + perf * 1.8 - 2.0),
             2,
             'La mejor joya del fútbol europeo.',
           );
@@ -2716,6 +2743,10 @@
   function showStep() {
     if (G.qi >= G.queue.length) return afterQueue();
     const id = G.queue[G.qi];
+    if (id === 'league') {
+      G.rc = 1; // un reintento propio para la liga
+      G.rcn = CMP[G.club.c][0];
+    }
     if (id === 'awards') {
       G.awq = nominations();
       G.queue.splice(G.qi, 1, ...G.awq.map(() => 'aw'));
@@ -2831,27 +2862,34 @@
       .join('');
   }
 
+  /* Pasos que pertenecen a una competición (tienen su reintento propio). */
+  const isCompStep = (id) => id === 'league' || id === 'cm' || id === 'ntm';
+  const isMiniId = (id) => id === 'clasico' || id === 'penal';
+
+  /* Dos tipos de reintento:
+     - rc: el de la competición (liga, cada copa, cada torneo de selección). Se usa solo en esa
+       competición y se renueva en la siguiente.
+     - rs: el comodín de la temporada. Sirve para lo que quieras: cualquier ruleta, un premio
+       individual o repetir un penal o un tiro libre. */
   function retry() {
     const c = G.cur;
-    if (
-      !c ||
-      c.idx == null ||
-      !(G.rs > 0) ||
-      spinning ||
-      !c.snap ||
-      c.id === 'event' ||
-      c.id === 'train' ||
-      c.id === 'clasico' ||
-      c.id === 'penal'
-    )
-      return;
+    if (!c || c.idx == null || spinning || !c.snap || c.id === 'event' || c.id === 'train') return;
+    const useC = isCompStep(c.id) && G.rc > 0;
+    if (!useC && !(G.rs > 0)) return;
+    const mini = isMiniId(c.id);
     const keep = { id: c.id, t: c.t, h: c.h, slots: c.slots, idx: null, text: null, snap: null };
     G = JSON.parse(c.snap);
-    G.rs = 0;
+    if (useC) G.rc = 0;
+    else G.rs = 0;
     G.cur = keep;
     save();
-    renderGame();
-    spin();
+    if (mini) {
+      mg = { cur: null }; // el minijuego arranca de nuevo
+      renderGame();
+    } else {
+      renderGame();
+      spin();
+    }
   }
 
   function afterQueue() {
@@ -2886,8 +2924,9 @@
     render();
     // Al pasar de un paso a otro te quedás donde estabas (no vuelve arriba).
     if (G.phase !== 'choose' && G.phase !== 'ended') {
-      window.scrollTo(0, y);
-      requestAnimationFrame(() => window.scrollTo(0, y));
+      // 'instant': este ajuste es para quedarte donde estabas, no debe animarse.
+      window.scrollTo({ top: y, behavior: 'instant' });
+      requestAnimationFrame(() => window.scrollTo({ top: y, behavior: 'instant' }));
     }
   }
 
@@ -3146,23 +3185,27 @@
   function spin() {
     if (spinning || !G || !G.cur || G.cur.idx != null) return;
     const slots = G.cur.slots;
-    // El resultado se elige según la probabilidad real de cada porción.
-    let r = rnd(),
-      idx = slots.length - 1;
-    for (let i = 0; i < slots.length; i++) {
-      r -= slotP(slots, i);
-      if (r <= 0) {
-        idx = i;
-        break;
-      }
+    const R0 = rot;
+    // El resultado NO se sortea de antemano: sale de dónde frena la ruleta. La fuerza del
+    // giro es al azar y la vuelta total se reparte parejo sobre un número ENTERO de vueltas,
+    // así cada porción cae con una probabilidad exactamente igual a su tamaño.
+    const base = reduce ? 1 : SET.fast ? 1.5 : 2.5 + rnd() * 1.5,
+      span = reduce || SET.fast ? 1 : 3;
+    let fin, idx, power;
+    for (let k = 0; k < 40; k++) {
+      power = rnd();
+      fin = R0 + TP * (base + span * power);
+      idx = sliceAt(fin, slots);
+      // Que no frene justo sobre la línea que separa dos porciones.
+      const a = (((-fin % TP) + TP) % TP) / TP,
+        f = (a - sliceStart(slots, idx) / TP) / slotP(slots, idx);
+      if (f > 0.07 && f < 0.93) break;
     }
-    const u = 0.2 + rnd() * 0.6;
-    const target = -(sliceStart(slots, idx) + u * slotP(slots, idx) * TP),
-      R0 = rot;
-    const turns = SET.fast ? 3 : ri(5, 7),
-      delta = ((((target - R0) % TP) + TP) % TP) + TP * turns;
-    const dur = reduce ? 500 : SET.fast ? 1300 : 4200,
-      t0 = performance.now();
+    const delta = fin - R0,
+      ease = 2.4 + rnd() * 2.2, // cuánto "frena" la ruleta: distinto en cada giro
+      dur = reduce ? 500 : SET.fast ? 1000 + 500 * power : 2800 + 2800 * power,
+      t0 = performance.now(),
+      target = fin;
     let last = sliceAt(R0, slots);
     spinning = true;
     hi = -1;
@@ -3170,7 +3213,7 @@
     setMain();
     function frame(now) {
       const t = Math.min(1, (now - t0) / dur),
-        e = 1 - Math.pow(1 - t, 4);
+        e = 1 - Math.pow(1 - t, ease);
       rot = R0 + delta * e;
       const s = sliceAt(rot, slots);
       if (s !== last) {
@@ -3550,6 +3593,10 @@
   function mEnd() {
     mg.phase = 'done';
     const good = G.pos === 'POR' ? mg.res === 'save' : mg.res === 'goal';
+    {
+      const { cur, ...rest } = G;
+      G.cur.snap = JSON.stringify(rest);
+    }
     G.cur.idx = 0;
     G.cur.text = G.cur.id === 'penal' ? applyPenal(mg.res) : applyMini(mg.res);
     if (G.cur.id === 'clasico') newsAfter('clasico', { res: mg.res }, G.trophies.length);
@@ -3690,14 +3737,25 @@
       $('#rs-note').hidden = true;
       return;
     }
-    const mini = c.id === 'clasico' || c.id === 'penal',
-      noRs = c.id === 'event' || c.id === 'train' || mini;
+    const mini = isMiniId(c.id),
+      noRs = c.id === 'event' || c.id === 'train',
+      comp = isCompStep(c.id),
+      useC = comp && G.rc > 0,
+      canRetry = c.idx != null && !spinning && !noRs && (useC || G.rs > 0);
     b.hidden = c.id === 'event' || c.id === 'train' || (mini && c.idx == null);
     b.disabled = spinning;
-    $('#b-retry').hidden = !(c.idx != null && G.rs > 0 && !spinning && !noRs);
+    $('#b-retry').hidden = !canRetry;
+    $('#b-retry').textContent = mini
+      ? 'Repetir con el comodín'
+      : useC
+        ? 'Reintentar (' + (G.rcn || 'competición') + ')'
+        : 'Girar de nuevo (comodín)';
     $('#rs-note').hidden = noRs;
     $('#rs-note').textContent =
-      `Segunda oportunidad de la temporada: ${G.rs > 0 ? '1 disponible' : 'ya usada'}`;
+      (comp
+        ? `Reintento de ${G.rcn || 'la competición'}: ${G.rc > 0 ? '1 disponible' : 'usado'}. `
+        : '') +
+      `Comodín de la temporada: ${G.rs > 0 ? '1 disponible' : 'usado'}${comp ? '' : ' (sirve para repetir una ruleta, un premio, un penal o un tiro libre)'}.`;
     if (c.idx == null) b.textContent = 'Girar la ruleta';
     else
       b.textContent =

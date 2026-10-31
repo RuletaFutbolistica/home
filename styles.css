@@ -1,4 +1,4 @@
-/* =====================================================================
+/* =====================================================/* =====================================================================
    CARRERA A LA RULETA · HOJA DE ESTILOS
    =====================================================================
 
@@ -154,6 +154,12 @@
 /* Evita que los elementos con atributo hidden aparezcan igual. */
 [hidden] {
   display: none !important;
+}
+
+/* Scroll suave en toda la página: cuando sube o baja sola (por ejemplo al
+   cambiar de pantalla) se desliza en vez de saltar. */
+html {
+  scroll-behavior: smooth;
 }
 
 /* El ancho de un elemento incluye su borde y su relleno. */

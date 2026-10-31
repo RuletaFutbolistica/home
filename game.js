@@ -1,3 +1,24 @@
+/*
+ * CARRERA A LA RULETA · lógica del juego
+ *
+ * Índice (buscá el título entre /* ---------- para saltar):
+ *   - utilidades de ruleta
+ *   - reglas del juego
+ *   - eventos de temporada
+ *   - ruletas
+ *   - flujo
+ *   - ruleta
+ *   - partido clave: minijuego
+ *   - pantallas
+ *   - confirmaciones
+ *   - eventos
+ *   - formulario de creación
+ *   - arranque
+ *
+ * Estado: todo vive en el objeto G (se guarda en localStorage con save()).
+ * Cada paso de la temporada es un id dentro de G.queue; showStep() prepara
+ * la ruleta del paso, spec() define sus resultados y apply() los aplica.
+ */
 (function () {
   'use strict';
   const $ = (s) => document.querySelector(s);
@@ -2464,7 +2485,15 @@
 
   function newGame() {
     const pos = document.querySelector('input[name=pos]:checked').value;
-    const c = ALL.find((x) => x.n === $('#in-club').value);
+    const pickedClub = $('#in-club').value;
+    // "Al azar": el juego elige un club del país, con más chances para los chicos y medianos.
+    const c =
+      pickedClub === RANDOM_CLUB
+        ? pickW(
+            ALL.filter((x) => x.c === $('#in-country').value),
+            (x) => ({ 1: 1, 2: 2, 3: 3 })[x.t],
+          )
+        : ALL.find((x) => x.n === pickedClub);
     G = {
       name: $('#in-name').value.trim(),
       nat: $('#in-nat').value,
@@ -2522,6 +2551,7 @@
     AC = null;
   const reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+  /* Lee los colores desde el CSS (variables --slice-*, --pitch, --kit-*, etc.). */
   function colors() {
     const cs = getComputedStyle(document.documentElement),
       g = (n) => cs.getPropertyValue(n).trim();
@@ -2539,14 +2569,18 @@
     };
   }
 
+  /* Ancho (0 a 1) de la porción i. Si una partida vieja no tiene `p`, se reparte parejo. */
   const slotP = (slots, i) => (slots[i].p != null ? slots[i].p : 1 / slots.length);
 
+  /* Ángulo donde empieza la porción i, medido desde el inicio de la ruleta. */
   function sliceStart(slots, i) {
     let a = 0;
     for (let k = 0; k < i; k++) a += slotP(slots, k);
     return a * TP;
   }
 
+  /* Índice de color de la porción i: se alternan 4 colores, evitando que la
+     última porción repita el color de la primera. */
   const sliceColor = (i, n) => (n > 1 && i === n - 1 && i % 4 === 0 ? 2 : i % 4);
 
   function draw() {
@@ -2589,6 +2623,7 @@
       cx.strokeStyle = C.bg;
       cx.stroke();
 
+      // Texto: solo se dibuja si la porción es lo bastante ancha para leerlo.
       if (w * R * 0.8 >= 12) {
         cx.save();
         cx.rotate(a0 + w / 2);
@@ -2606,6 +2641,7 @@
       }
     });
 
+    // Resultado: se oscurecen las demás porciones y se marca la elegida.
     if (hi >= 0 && !spinning) {
       arcs.forEach(({ a0, w }, i) => {
         if (i === hi) return;
@@ -2626,6 +2662,7 @@
       cx.stroke();
     }
 
+    // Borde exterior y centro.
     cx.beginPath();
     cx.arc(0, 0, R, 0, TP);
     cx.lineWidth = 4;
@@ -2728,6 +2765,7 @@
     requestAnimationFrame(frame);
   }
 
+  /* ---------- partido clave: minijuego ---------- */
   const mc = $('#mini'),
     mx = mc.getContext('2d');
   let mg = { cur: null };
@@ -3374,8 +3412,13 @@ ${N[0]} ${sk.a || 0} · ${N[1]} ${sk.b || 0} · ${N[2]} ${sk.c || 0} · ${N[3]} 
     $('#t-new').hidden = !G;
     if (G && G.phase === 'ended') renderEnd();
     else if (G) renderGame();
-    window.scrollTo(0, 0);
+    // Solo vuelve arriba al cambiar de pantalla (crear → jugar → fin) o de fase;
+    // al pasar de un paso al siguiente se queda donde estabas.
+    const where = !G ? 'create' : G.phase;
+    if (where !== lastWhere) window.scrollTo(0, 0);
+    lastWhere = where;
   }
+  let lastWhere = null;
 
   /* ---------- confirmaciones ---------- */
 
@@ -3472,16 +3515,20 @@ ${N[0]} ${sk.a || 0} · ${N[1]} ${sk.b || 0} · ${N[2]} ${sk.c || 0} · ${N[3]} 
     .map((n) => `<option>${n}</option>`)
     .join('');
 
+  const RANDOM_CLUB = '__random';
+
   function fillClubs() {
     const c = $('#in-country').value;
-    $('#in-club').innerHTML = LG[c][1]
-      .slice()
-      .sort((a, b) => b[1] - a[1])
-      .map(
-        ([n, t]) =>
-          `<option value="${esc(n)}">${esc(n)}${t === 1 ? ' · grande' : t === 2 ? ' · mediano' : ''}</option>`,
-      )
-      .join('');
+    $('#in-club').innerHTML =
+      `<option value="${RANDOM_CLUB}">🎲 Al azar</option>` +
+      LG[c][1]
+        .slice()
+        .sort((a, b) => b[1] - a[1])
+        .map(
+          ([n, t]) =>
+            `<option value="${esc(n)}">${esc(n)}${t === 1 ? ' · grande' : t === 2 ? ' · mediano' : ''}</option>`,
+        )
+        .join('');
     const small = LG[c][1].filter((x) => x[1] === 3);
     if (small.length) $('#in-club').value = small[ri(0, small.length - 1)][0];
   }

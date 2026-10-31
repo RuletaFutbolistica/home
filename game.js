@@ -1,24 +1,3 @@
-/*
- * CARRERA A LA RULETA · lógica del juego
- *
- * Índice (buscá el título entre /* ---------- para saltar):
- *   - utilidades de ruleta
- *   - reglas del juego
- *   - eventos de temporada
- *   - ruletas
- *   - flujo
- *   - ruleta
- *   - partido clave: minijuego
- *   - pantallas
- *   - confirmaciones
- *   - eventos
- *   - formulario de creación
- *   - arranque
- *
- * Estado: todo vive en el objeto G (se guarda en localStorage con save()).
- * Cada paso de la temporada es un id dentro de G.queue; showStep() prepara
- * la ruleta del paso, spec() define sus resultados y apply() los aplica.
- */
 (function () {
   'use strict';
   const $ = (s) => document.querySelector(s);
@@ -2543,7 +2522,6 @@
     AC = null;
   const reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  /* Lee los colores desde el CSS (variables --slice-*, --pitch, --kit-*, etc.). */
   function colors() {
     const cs = getComputedStyle(document.documentElement),
       g = (n) => cs.getPropertyValue(n).trim();
@@ -2561,18 +2539,14 @@
     };
   }
 
-  /* Ancho (0 a 1) de la porción i. Si una partida vieja no tiene `p`, se reparte parejo. */
   const slotP = (slots, i) => (slots[i].p != null ? slots[i].p : 1 / slots.length);
 
-  /* Ángulo donde empieza la porción i, medido desde el inicio de la ruleta. */
   function sliceStart(slots, i) {
     let a = 0;
     for (let k = 0; k < i; k++) a += slotP(slots, k);
     return a * TP;
   }
 
-  /* Índice de color de la porción i: se alternan 4 colores, evitando que la
-     última porción repita el color de la primera. */
   const sliceColor = (i, n) => (n > 1 && i === n - 1 && i % 4 === 0 ? 2 : i % 4);
 
   function draw() {
@@ -2615,7 +2589,6 @@
       cx.strokeStyle = C.bg;
       cx.stroke();
 
-      // Texto: solo se dibuja si la porción es lo bastante ancha para leerlo.
       if (w * R * 0.8 >= 12) {
         cx.save();
         cx.rotate(a0 + w / 2);
@@ -2633,7 +2606,6 @@
       }
     });
 
-    // Resultado: se oscurecen las demás porciones y se marca la elegida.
     if (hi >= 0 && !spinning) {
       arcs.forEach(({ a0, w }, i) => {
         if (i === hi) return;
@@ -2654,7 +2626,6 @@
       cx.stroke();
     }
 
-    // Borde exterior y centro.
     cx.beginPath();
     cx.arc(0, 0, R, 0, TP);
     cx.lineWidth = 4;
@@ -2757,7 +2728,6 @@
     requestAnimationFrame(frame);
   }
 
-  /* ---------- partido clave: minijuego ---------- */
   const mc = $('#mini'),
     mx = mc.getContext('2d');
   let mg = { cur: null };

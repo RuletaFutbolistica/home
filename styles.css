@@ -1,4 +1,4 @@
-/* =====================================================/* =====================================================================
+/* =====================================================================
    CARRERA A LA RULETA · HOJA DE ESTILOS
    =====================================================================
 
@@ -979,6 +979,27 @@ fieldset {
   display: grid;
   gap: 10px;
   width: 100%;
+}
+
+/* Cada tarjeta: el texto arriba y el botón siempre pegado al fondo, así los
+   botones quedan alineados aunque las descripciones midan distinto. */
+.offer {
+  grid-template-rows: 1fr auto;
+}
+
+/* Con 6 opciones o más (los entrenamientos) van de a dos por renglón.
+   Con 5 o menos (eventos, contratos) quedan una debajo de otra. */
+#offers:has(> .offer:nth-child(6)) {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+/* Tarjetas de dos columnas: un poco más compactas para que entren bien. */
+#offers:has(> .offer:nth-child(6)) .offer {
+  padding: 12px;
+}
+
+#offers:has(> .offer:nth-child(6)) .offer h4 {
+  font-size: 22px;
 }
 
 /* Cada tarjeta. */

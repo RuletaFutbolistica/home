@@ -2023,24 +2023,24 @@
   const PAPERS = [
     'La Crónica Deportiva',
     'El Vestuario',
-    'Diario Pelota',
-    'Tribuna del Hincha',
-    'La Voz del Fútbol',
-    'Gol & Pizarra',
+    'Daily Soccer',
+    'Rising Stars',
+    'Diario Gol',
+    'Gol & Pasión',
   ];
-  const SCOUT = 'llamando la atención de ojeadores de importantes clubes locales y de otros países';
+  const SCOUT = 'llamando la atención de ojeadores de distintos clubes alrededor del globo';
   const NW = {
     doblete: [
       [
         '¡{who} marcó un doblete ante {rival}!',
-        'Se destacó en la victoria y ya suena fuerte en el mercado.',
-        'Con dos goles frente a {rival}, {name} fue la figura de la cancha de {club}, ' +
+        'Se destacó en la victoria y ya suena en las calles.',
+        'Con dos goles frente a {rival}, {name} fue la figura de la cancha con {club}, ' +
           SCOUT +
           '.',
       ],
       [
-        'Doblete de {name} y {club} festeja',
-        '{rival} no pudo con el juvenil de la fecha.',
+        'Doblete de {name} y {club} festeja una merecida victoria',
+        '{rival} no pudo contra el creciente talento juvenil de la fecha.',
         'Dos goles, mucha personalidad y una actuación que no pasó desapercibida: {name} se destacó ante {rival}, ' +
           SCOUT +
           '.',
@@ -2048,16 +2048,16 @@
     ],
     goleador: [
       [
-        '{name} ya lleva {g} goles y no para',
-        'El goleador de {club} es la sensación de la {liga}.',
-        'Con {g} tantos en la temporada, {name} se instaló entre los máximos artilleros y ahora lo siguen ojeadores de varios países.',
+        '{name} ya lleva {g} goles y no para de destacarse',
+        '¡El goleador de {club} es la sensación de la {liga}!',
+        'Con {g} tantos esta temporada, {name} se instaló entre los máximos goleadores del año y entre más cerca está la fecha límite del contrato, más clubes suenan interesados.',
       ],
     ],
     asist: [
       [
-        '{name}, el socio perfecto: {a} asistencias',
-        'Cada pase suyo parece gol.',
-        'La temporada de {name} en {club} deslumbra por su visión de juego: {a} asistencias, ' +
+        '{name} es el socio perfecto: {a} asistencias',
+        'Cada pase suyo parece medio gol.',
+        'La temporada de {name} en {club} deslumbra por su visión de juego: ¡{a} asistencias!, ' +
           SCOUT +
           '.',
       ],
@@ -2089,7 +2089,7 @@
     ],
     lesion: [
       [
-        'Mala noticia: {name} sufrió una lesión grave',
+        'Malas noticias: {name} sufrió una lesión grave, encendiendo las alarmas de {club}',
         'Estará varios partidos afuera.',
         'El parte médico de {club} confirmó que {name} se perderá buena parte de la temporada. Ahora llega el momento de recuperarse.',
       ],
@@ -2098,19 +2098,19 @@
       [
         '¡{club} campeón! {name} levantó el trofeo',
         '{trofeo}: una noche para el recuerdo.',
-        'Festejo total. {club} se quedó con {trofeo} y {name} fue parte de la gloria, ' +
+        'Festejo total. {club} se quedó con {trofeo} y {name} fue parte importante de la gloria, ' +
           SCOUT +
           '.',
       ],
       [
         '{name} ya tiene su primera gran página en la historia',
         'Campeón de {trofeo}.',
-        'Con {club} se quedaron con {trofeo} y el nombre de {name} se escucha cada vez más lejos.',
+        'Con {club} se quedaron con {trofeo} y el nombre de {name} se escucha cada vez más fuerte.',
       ],
     ],
     titulo_nt: [
       [
-        '¡{nat} campeón! {name} es parte de la historia',
+        '¡{nat} campeón! {name} se convierte en parte de la historia',
         '{trofeo}: el país entero lo festeja.',
         'Con {name} en el plantel, {nat} se quedó con {trofeo}. Un título que ningún hincha va a olvidar.',
       ],
@@ -2138,7 +2138,7 @@
     ],
     clasico_ok: [
       [
-        '¡{name} fue héroe en el clásico ante {rival}!',
+        '¡{name} se convirtió en héroe en el clásico ante {rival}!',
         'La tarde que {club} no va a olvidar.',
         'En el partido más caliente del año, {name} se vistió de figura y la gente de {club} lo ovacionó de pie.',
       ],
@@ -2154,7 +2154,12 @@
       [
         '¡{name} ganó el premio: {premio}!',
         'Una noche de gala para el crack.',
-        'En la ceremonia, {name} recibió el galardón "{premio}". Los flashes fueron para él y el fútbol entero lo aplaudió.',
+        'En la ceremonia, {name} recibió el galardón "{premio}". Los flashes fueron para él y el fútbol entero lo aplaudió de pie.',
+      ],
+      [
+        '¡{name} ganó el premio: {premio}!',
+        'Una noche soñada para el genio de la temporada.',
+        'En el discurso, {name} recibió el galardón "{premio}". Y declaró como un señor, destacando la importancia del equipo entero para poder alcanzar el premio.',
       ],
     ],
     natl_wc: [
@@ -2350,7 +2355,7 @@
     'España': {
       s: 'Trofeo Pichichi',
       a: 'Máximo asistidor de LaLiga',
-      m: 'Trofeo Alfredo Di Stéfano (mejor jugador de LaLiga)',
+      m: 'Trofeo Alfredo Di Stéfano (Mejor jugador de LaLiga)',
       y: 'Mejor jugador joven de LaLiga',
       k: 'Trofeo Zamora',
     },
@@ -2979,9 +2984,9 @@
   const isMiniId = (id) => id === 'clasico' || id === 'penal';
 
   /* Dos tipos de reintento:
-     - rc: el de la competición (liga, cada copa, cada torneo de selección). Se usa solo en esa
-       competición y se renueva en la siguiente.
-     - rs: el comodín de la temporada. Sirve para lo que quieras: cualquier ruleta, un premio
+    - rc: el de la competición (liga, cada copa, cada torneo de selección). Se usa solo en esa
+      competición y se renueva en la siguiente.
+    - rs: el comodín de la temporada. Sirve para lo que quieras: cualquier ruleta, un premio
        individual o repetir un penal o un tiro libre. */
   function retry() {
     const c = G.cur;
@@ -4132,7 +4137,7 @@ ${N[0]} ${sk.a || 0} · ${N[1]} ${sk.b || 0} · ${N[2]} ${sk.c || 0} · ${N[3]} 
   function syncTools() {
     $('#t-sound').textContent = 'Sonido: ' + (SET.sound ? 'sí' : 'no');
     $('#t-sound').setAttribute('aria-pressed', SET.sound);
-    $('#t-fast').textContent = 'Modo: ' + (SET.sim ? 'simular temporada' : 'carrera normal');
+    $('#t-fast').textContent = 'Modo: ' + (SET.sim ? 'Simular Temporada' : 'Carrera Normal');
     $('#t-fast').setAttribute('aria-pressed', SET.sim);
   }
   $('#t-sound').onclick = () => {

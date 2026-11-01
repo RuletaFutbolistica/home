@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Carrera a la Ruleta</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;600&family=Big+Shoulders+Display:wght@800&family=Playfair+Display:wght@700;900&family=Source+Serif+4:wght@400;600&display=swap">
-<link rel="stylesheet" href="styles.css?v=6">
+<link rel="stylesheet" href="styles.css?v=7">
 </head>
 <body>
 <div class="wrap">
@@ -13,7 +13,7 @@
     <h1 class="brand">Carrera a la Ruleta</h1>
     <div class="tools">
       <button class="chip" id="t-sound" type="button" aria-pressed="true">Sonido: sí</button>
-      <button class="chip" id="t-fast" type="button" aria-pressed="false">Giro: normal</button>
+      <button class="chip" id="t-fast" type="button" aria-pressed="false">Modo: carrera normal</button>
       <button class="chip" id="t-new" type="button" hidden>Nueva carrera</button>
     </div>
   </header>
@@ -55,8 +55,10 @@
           <label class="opt"><input type="radio" name="pos" value="DEL" checked><span>Delantero</span></label>
         </div>
       </fieldset>
-      <label for="in-country">País donde debutás<select id="in-country"></select></label>
-      <label for="in-club">Club<select id="in-club"></select></label>
+      <div class="pair">
+        <label for="in-country">País donde debutás<select id="in-country"></select></label>
+        <label for="in-club">Club<select id="in-club"></select></label>
+      </div>
       <div class="tip"><span>Cuanto más grande es el club debutante, más difícil es ganarte el puesto.</span></div>
       <p class="err" id="err" role="alert"></p>
       <button class="btn" type="submit">Firmar y debutar</button>
@@ -110,6 +112,6 @@
     <textarea id="e-text" readonly rows="8" hidden aria-label="Resumen de la carrera"></textarea>
   </section>
 </div>
-<script src="game.js?v=6"></script>
+<script src="game.js?v=7"></script>
 </body>
 </html>

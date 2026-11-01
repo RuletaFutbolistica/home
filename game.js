@@ -504,7 +504,7 @@
     TM = { 1: 1.6, 2: 1, 3: 0.55 };
   const RETIRE = ['Arabia Saudita', 'Estados Unidos', 'Japón', 'México'];
 
-  let SET = { sound: true, fast: false };
+  let SET = { sound: true, sim: false, simSeen: false };
   try {
     Object.assign(SET, JSON.parse(localStorage.getItem(SKEY) || '{}'));
   } catch (e) {}
@@ -2714,6 +2714,118 @@
     return out.slice(0, 5).sort((a, b) => a.tier - b.tier || a.p - b.p);
   }
 
+  /* ---------- modo "simular temporada" ----------
+   Con el modo activado, los pasos de la temporada se resuelven solos (con las mismas
+   probabilidades de siempre) y el juego se frena únicamente en los momentos importantes:
+   - el debut y las ofertas de contrato,
+   - los clásicos,
+   - los partidos de semifinal en adelante (copas, continentales y selección),
+   - cuando ganás un trofeo (se frena mostrando el resultado),
+   - cada premio individual al que te nominan,
+   - el cierre de la temporada, donde se muestra un resumen. */
+  function autoKind() {
+    const c = G.cur;
+    if (!c || c.idx != null) return null;
+    const id = c.id,
+      late = (st) => /Semifinal|Final/.test(st || '');
+    if (['pot', 'ovr0', 'offers', 'aw', 'clasico'].includes(id)) return null;
+    if (id === 'cm') return late(G.ct && G.ct.st[G.ct.i]) ? null : 'wheel';
+    if (id === 'ntm') return late(G.nt && G.nt.st[G.nt.i]) ? null : 'wheel';
+    if (id === 'event' || id === 'train') return 'pick';
+    if (id === 'penal') return 'penal';
+    return 'wheel';
+  }
+
+  /* Elige solo el entrenamiento (la habilidad más baja) o la opción de un evento (al azar). */
+  function autoPick(id) {
+    if (id === 'train') {
+      const sk = G.sk || {},
+        cur = [sk.a, sk.b, sk.c, sk.d, G.stam, sk.e].map((v) => v || 0),
+        low = Math.min(...cur),
+        opts = cur.map((v, i) => (v === low ? i : -1)).filter((i) => i >= 0);
+      G.trk = opts[ri(0, opts.length - 1)];
+      G.queue.splice(G.qi + 1, 0, 'trainres');
+    } else {
+      G.evc = ri(0, EV[G.evi].c.length - 1);
+      G.queue.splice(G.qi + 1, 0, 'evres');
+    }
+    G.qi++;
+    showStep();
+  }
+
+  /* Resuelve la ruleta actual al instante. Devuelve true si ganaste un trofeo. */
+  function resolveInstant() {
+    const c = G.cur,
+      slots = c.slots;
+    let r = rnd(),
+      idx = slots.length - 1;
+    for (let i = 0; i < slots.length; i++) {
+      r -= slotP(slots, i);
+      if (r <= 0) {
+        idx = i;
+        break;
+      }
+    }
+    {
+      const { cur, ...rest } = G;
+      c.snap = JSON.stringify(rest);
+    }
+    c.idx = idx;
+    const tb = G.trophies.length;
+    c.text = apply(c.id, slots[idx]);
+    newsAfter(c.id, slots[idx], tb);
+    // La ruleta queda apuntando a la porción elegida, por si el juego se frena acá.
+    rot = -(sliceStart(slots, idx) + (0.2 + rnd() * 0.6) * slotP(slots, idx) * TP);
+    hi = idx;
+    return G.trophies.length > tb;
+  }
+
+  function seasonSummary() {
+    const h = G.hist[G.hist.length - 1];
+    if (!h) return '';
+    return (
+      `\nTemporada ${seasonLabel(h.y)}: ${h.pj} PJ · ` +
+      (G.pos === 'POR'
+        ? `${h.sv} atajadas, ${h.cs} vallas invictas`
+        : `${h.g} goles, ${h.as} asistencias`) +
+      (h.res ? ' · ' + h.res : '') +
+      (h.aw ? ' · ' + h.aw : '')
+    );
+  }
+
+  function settle() {
+    let guard = 0;
+    while (SET.sim && G && G.phase === 'play' && G.cur && guard++ < 600) {
+      const k = autoKind();
+      if (!k) break;
+      if (k === 'pick') {
+        autoPick(G.cur.id);
+        continue;
+      }
+      if (k === 'penal') {
+        const gk = G.pos === 'POR',
+          res = gk
+            ? rnd() < 0.25
+              ? 'save'
+              : 'goal'
+            : rnd() < 0.78
+              ? 'goal'
+              : pk(['save', 'wide']);
+        G.cur.idx = 0;
+        G.cur.text = applyPenal(res);
+        G.qi++;
+        showStep();
+        continue;
+      }
+      const won = resolveInstant();
+      if (G.cur.id === 'progress') G.cur.text += seasonSummary();
+      if (won || G.cur.id === 'progress') break; // se frena mostrando el resultado
+      G.qi++;
+      showStep();
+    }
+    save();
+  }
+
   function genOffers(k) {
     const g = G,
       cur = ALL.find((c) => c.n === g.club.n),
@@ -3189,8 +3301,8 @@
     // El resultado NO se sortea de antemano: sale de dónde frena la ruleta. La fuerza del
     // giro es al azar y la vuelta total se reparte parejo sobre un número ENTERO de vueltas,
     // así cada porción cae con una probabilidad exactamente igual a su tamaño.
-    const base = reduce ? 1 : SET.fast ? 1.5 : 2.5 + rnd() * 1.5,
-      span = reduce || SET.fast ? 1 : 3;
+    const base = reduce ? 1 : 2.5 + rnd() * 1.5,
+      span = reduce ? 1 : 3;
     let fin, idx, power;
     for (let k = 0; k < 40; k++) {
       power = rnd();
@@ -3203,7 +3315,7 @@
     }
     const delta = fin - R0,
       ease = 2.4 + rnd() * 2.2, // cuánto "frena" la ruleta: distinto en cada giro
-      dur = reduce ? 500 : SET.fast ? 1000 + 500 * power : 2800 + 2800 * power,
+      dur = reduce ? 500 : 2800 + 2800 * power,
       t0 = performance.now(),
       target = fin;
     let last = sliceAt(R0, slots);
@@ -3934,6 +4046,7 @@ ${N[0]} ${sk.a || 0} · ${N[1]} ${sk.b || 0} · ${N[2]} ${sk.c || 0} · ${N[3]} 
     $('#s-game').hidden = !(G && G.phase !== 'ended');
     $('#s-end').hidden = !(G && G.phase === 'ended');
     $('#t-new').hidden = !G;
+    if (G && G.phase === 'play' && SET.sim) settle();
     if (G && G.phase === 'ended') renderEnd();
     else if (G) renderGame();
     // Solo vuelve arriba al cambiar de pantalla (crear → jugar → fin) o de fase;
@@ -4019,18 +4132,33 @@ ${N[0]} ${sk.a || 0} · ${N[1]} ${sk.b || 0} · ${N[2]} ${sk.c || 0} · ${N[3]} 
   function syncTools() {
     $('#t-sound').textContent = 'Sonido: ' + (SET.sound ? 'sí' : 'no');
     $('#t-sound').setAttribute('aria-pressed', SET.sound);
-    $('#t-fast').textContent = 'Giro: ' + (SET.fast ? 'rápido' : 'normal');
-    $('#t-fast').setAttribute('aria-pressed', SET.fast);
+    $('#t-fast').textContent = 'Modo: ' + (SET.sim ? 'simular temporada' : 'carrera normal');
+    $('#t-fast').setAttribute('aria-pressed', SET.sim);
   }
   $('#t-sound').onclick = () => {
     SET.sound = !SET.sound;
     saveSet();
     syncTools();
   };
-  $('#t-fast').onclick = () => {
-    SET.fast = !SET.fast;
+  function setSim(v) {
+    SET.sim = v;
     saveSet();
     syncTools();
+    if (G && G.phase === 'play') {
+      render();
+    }
+  }
+  $('#t-fast').onclick = () => {
+    // La primera vez que se activa, se explica qué hace este modo.
+    if (!SET.sim && !SET.simSeen)
+      return ask(
+        'Este modo simula toda tu temporada excepto por eventos importantes, como clásicos, partidos decisivos de semifinales en adelante o la obtención de trofeos o premios. Los entrenamientos y los eventos con elección se resuelven solos.',
+        () => {
+          SET.simSeen = true;
+          setSim(true);
+        },
+      );
+    setSim(!SET.sim);
   };
 
   /* ---------- formulario de creación ---------- */

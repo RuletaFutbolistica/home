@@ -163,6 +163,11 @@
     ],
     'Copa Asiática': ['Japón', 'Corea del Sur', 'Arabia Saudita', 'Australia'],
   };
+  // Invitados y vecinos que completan los torneos con pocas selecciones propias.
+  const REGX = {
+    'Copa Oro': ['Costa Rica', 'Panamá', 'Jamaica', 'Honduras'],
+    'Copa Asiática': ['Irán', 'Catar', 'Irak', 'Uzbekistán'],
+  };
   const regOf = (n) => Object.keys(REGN).find((k) => REGN[k].includes(n)) || 'Copa regional';
 
   // país: [multiplicador de sueldos, clubes [nombre, nivel 1 grande / 2 mediano / 3 chico]]
@@ -1424,9 +1429,15 @@
           i = nt.i,
           ko = nt.kind !== 'fr' && i >= 3,
           SS = { 1: 80, 2: 72, 3: 64 };
-        const pool = ko
-          ? NATS.filter((n) => n !== g.nat && NT(n) <= 2)
-          : NATS.filter((n) => n !== g.nat);
+        // Mundial y amistosos: cualquier selección. Copa regional: solo rivales de esa región,
+        // sin repetir dentro del mismo torneo.
+        const base =
+          nt.kind === 'cup' && REGN[nt.comp] ? REGN[nt.comp].concat(REGX[nt.comp] || []) : NATS;
+        const seen = nt.seen || (nt.seen = []);
+        let pool = base.filter(
+          (n) => n !== g.nat && !seen.includes(n) && (!ko || NT(n) <= 2 || base !== NATS),
+        );
+        if (!pool.length) pool = base.filter((n) => n !== g.nat);
         const opp = pool[ri(0, pool.length - 1)],
           So = SS[NT(opp)] + ri(-3, 3),
           St = SS[NT(g.nat)],
@@ -1435,6 +1446,7 @@
           pw = (1 - pd) * SG(d / 9.5),
           pl = Math.max(0, 1 - pd - pw);
         const start = rnd() < clamp(SG((ov - natThr() + 3) / 4), 0.1, 0.97);
+        seen.push(opp);
         nt.m = { opp, start, d };
         return {
           t: nt.kind === 'fr' ? `Amistoso ${i + 1} de ${nt.n}` : `${nt.comp} · ${nt.st[i]}`,
@@ -2197,7 +2209,7 @@
   }
 
   /* Crea una noticia. extra: no cuenta para el tope de 2 por temporada.
-   scout: suma interés de ojeadores (más chances en la ruleta de contratos).
+  scout: suma interés de ojeadores (más chances en la ruleta de contratos).
    trust: cambio de confianza del DT. */
   function pushNews(type, extra, year, v0, o) {
     const g = G,
@@ -2355,7 +2367,7 @@
     'España': {
       s: 'Trofeo Pichichi',
       a: 'Máximo asistidor de LaLiga',
-      m: 'Trofeo Alfredo Di Stéfano (Mejor jugador de LaLiga)',
+      m: 'Trofeo Alfredo Di Stéfano (mejor jugador de LaLiga)',
       y: 'Mejor jugador joven de LaLiga',
       k: 'Trofeo Zamora',
     },
@@ -2984,9 +2996,9 @@
   const isMiniId = (id) => id === 'clasico' || id === 'penal';
 
   /* Dos tipos de reintento:
-    - rc: el de la competición (liga, cada copa, cada torneo de selección). Se usa solo en esa
-      competición y se renueva en la siguiente.
-    - rs: el comodín de la temporada. Sirve para lo que quieras: cualquier ruleta, un premio
+     - rc: el de la competición (liga, cada copa, cada torneo de selección). Se usa solo en esa
+       competición y se renueva en la siguiente.
+     - rs: el comodín de la temporada. Sirve para lo que quieras: cualquier ruleta, un premio
        individual o repetir un penal o un tiro libre. */
   function retry() {
     const c = G.cur;
@@ -4137,7 +4149,7 @@ ${N[0]} ${sk.a || 0} · ${N[1]} ${sk.b || 0} · ${N[2]} ${sk.c || 0} · ${N[3]} 
   function syncTools() {
     $('#t-sound').textContent = 'Sonido: ' + (SET.sound ? 'sí' : 'no');
     $('#t-sound').setAttribute('aria-pressed', SET.sound);
-    $('#t-fast').textContent = 'Modo: ' + (SET.sim ? 'Simular Temporada' : 'Carrera Normal');
+    $('#t-fast').textContent = 'Modo: ' + (SET.sim ? 'simular temporada' : 'carrera normal');
     $('#t-fast').setAttribute('aria-pressed', SET.sim);
   }
   $('#t-sound').onclick = () => {

@@ -39,6 +39,60 @@
     const n = SKN[gk ? 1 : 0];
     return [n[0], n[1], n[2], n[3], 'Resistencia', n[4]];
   };
+  /* Técnicas: al llegar a cierto nivel de una habilidad elegís UNA de dos (la otra se pierde).
+     La clave del árbol es la letra de la habilidad (a Definición, b Pase, c Regate, d Defensa)
+     y min es el nivel (0-10) que hay que alcanzar. Cada tramo se elige una sola vez. */
+  const TECH = {
+    marsella: ['Marsella', 'Giro de 360° para sacarte al defensor'],
+    amago: ['Amago por detrás y giro', 'Más riesgo, pero te deja mejor perfilado para el remate'],
+    sombrero: ['Sombrerito', 'Pasás la pelota por arriba del defensor'],
+    autopase: ['Autopase', 'Te la empujás y ganás metros extra'],
+    supervel: ['Súper velocidad', 'Una corrida a toda velocidad'],
+    cano: ['Caño', 'Humillás al defensor y quedás bien perfilado'],
+    filtrado: ['Pase filtrado', 'Pared que te deja de cara al arco'],
+    taco: ['Taco', 'Pared de primera, de taco'],
+    dupla: ['Dupla elegante', 'Dos o tres pases seguidos con un compañero cercano'],
+    profundidad: ['Pase en profundidad', 'Pared que te lanza al espacio'],
+    rabona: ['Tiro de rabona', 'Un remate muy difícil de leer para el arquero'],
+    volea: ['Volea', 'Potente, pero algo menos precisa'],
+    chilena: ['Chilena', 'La más espectacular y la más arriesgada'],
+    comba: ['Tiro con comba', 'Más preciso: cuesta menos pegarle al palo'],
+    superbarrida: ['Súper barrida', 'Entrada con mucho margen'],
+    anticipo: ['Anticipación', 'Te adelantás y cortás limpio'],
+    muralla: ['Muralla', 'Bloqueo reforzado'],
+    corte: ['Corte limpio', 'Corte seguro, sin riesgo de falta'],
+  };
+  const TTREE = {
+    c: [
+      { min: 3, o: ['marsella', 'amago'] },
+      { min: 6, o: ['sombrero', 'autopase'] },
+      { min: 9, o: ['supervel', 'cano'] },
+    ],
+    b: [
+      { min: 4, o: ['filtrado', 'taco'] },
+      { min: 8, o: ['dupla', 'profundidad'] },
+    ],
+    a: [
+      { min: 3, o: ['rabona', 'volea'] },
+      { min: 7, o: ['chilena', 'comba'] },
+    ],
+    d: [
+      { min: 4, o: ['superbarrida', 'anticipo'] },
+      { min: 8, o: ['muralla', 'corte'] },
+    ],
+  };
+  /* Primer tramo del árbol que ya alcanzaste y todavía no elegiste (los arqueros no tienen). */
+  function pendingTech() {
+    if (!G || G.pos === 'POR') return null;
+    G.tech = G.tech || {};
+    for (const k of Object.keys(TTREE))
+      for (let i = 0; i < TTREE[k].length; i++)
+        if ((G.sk[k] || 0) >= TTREE[k][i].min && !G.tech[k + i])
+          return { k, i, o: TTREE[k][i].o, min: TTREE[k][i].min };
+    return null;
+  }
+  const techList = () => Object.values(G.tech || {}).map((id) => TECH[id][0]);
+
   const TRH = [
     [
       'Más goles',
@@ -162,11 +216,6 @@
       'Egipto',
     ],
     'Copa Asiática': ['Japón', 'Corea del Sur', 'Arabia Saudita', 'Australia'],
-  };
-  // Invitados y vecinos que completan los torneos con pocas selecciones propias.
-  const REGX = {
-    'Copa Oro': ['Costa Rica', 'Panamá', 'Jamaica', 'Honduras'],
-    'Copa Asiática': ['Irán', 'Catar', 'Irak', 'Uzbekistán'],
   };
   const regOf = (n) => Object.keys(REGN).find((k) => REGN[k].includes(n)) || 'Copa regional';
 
@@ -537,6 +586,7 @@
     G.nta = G.nta || 0;
     G.aw = G.aw || [];
     G.rc = G.rc || 0;
+    G.tech = G.tech || {};
     G.tot.aw = G.tot.aw || 0;
     G.form = G.form || 0;
     if (G.queue) {
@@ -708,7 +758,7 @@
     const q = ['role', 'train'];
     if (G.pos === 'POR') q.push('saves', 'clean');
     else q.push('goals', 'assists');
-    q.push('league', 'cupstart');
+    q.push('lm', 'league', 'cupstart');
     if (G.contQ) q.push('contstart');
     if (G.ovr >= natThr() - 12) q.push('natl');
     q.push('awards');
@@ -1429,15 +1479,9 @@
           i = nt.i,
           ko = nt.kind !== 'fr' && i >= 3,
           SS = { 1: 80, 2: 72, 3: 64 };
-        // Mundial y amistosos: cualquier selección. Copa regional: solo rivales de esa región,
-        // sin repetir dentro del mismo torneo.
-        const base =
-          nt.kind === 'cup' && REGN[nt.comp] ? REGN[nt.comp].concat(REGX[nt.comp] || []) : NATS;
-        const seen = nt.seen || (nt.seen = []);
-        let pool = base.filter(
-          (n) => n !== g.nat && !seen.includes(n) && (!ko || NT(n) <= 2 || base !== NATS),
-        );
-        if (!pool.length) pool = base.filter((n) => n !== g.nat);
+        const pool = ko
+          ? NATS.filter((n) => n !== g.nat && NT(n) <= 2)
+          : NATS.filter((n) => n !== g.nat);
         const opp = pool[ri(0, pool.length - 1)],
           So = SS[NT(opp)] + ri(-3, 3),
           St = SS[NT(g.nat)],
@@ -1446,7 +1490,6 @@
           pw = (1 - pd) * SG(d / 9.5),
           pl = Math.max(0, 1 - pd - pw);
         const start = rnd() < clamp(SG((ov - natThr() + 3) / 4), 0.1, 0.97);
-        seen.push(opp);
         nt.m = { opp, start, d };
         return {
           t: nt.kind === 'fr' ? `Amistoso ${i + 1} de ${nt.n}` : `${nt.comp} · ${nt.st[i]}`,
@@ -1601,6 +1644,16 @@
       case 'clean':
         s.cs = sl.v;
         return `${sl.v} ${sl.v === 1 ? 'valla invicta' : 'vallas invictas'}`;
+      case 'lm': {
+        const im = g.imres,
+          m = g.lmm;
+        g.imres = null;
+        const w = im.gf > im.ga,
+          l = im.gf < im.ga;
+        g.form = clamp((g.form || 0) + (w ? 0.8 : l ? -0.8 : 0), -3, 3);
+        if (g.pos !== 'POR') s.g += im.g;
+        return `${w ? 'Victoria' : l ? 'Derrota' : 'Empate'} ${im.gf}-${im.ga} vs ${m.opp}${im.g ? ` (hiciste ${im.g} ${im.g === 1 ? 'gol' : 'goles'})` : ''}. ${w ? 'El equipo llega fortalecido a la ruleta de la liga.' : l ? 'La derrota pesa en la ruleta de la liga.' : 'El empate no cambia mucho las cosas.'}`;
+      }
       case 'league': {
         const B = [
             [1, 1],
@@ -1643,16 +1696,21 @@
           ko = ct.kind === 'cup' || i >= 3,
           gk = g.pos === 'POR',
           pick = (a) => a[ri(0, a.length - 1)];
+        const im = g.imres;
+        g.imres = null;
         let res = sl.v,
           pens = '',
           gf,
           ga;
         if (res === 'd' && ko) {
-          const win = rnd() < clamp(0.5 + m.d / 50, 0.25, 0.75);
+          const win = im && im.pen != null ? im.pen : rnd() < clamp(0.5 + m.d / 50, 0.25, 0.75);
           res = win ? 'w' : 'l';
           pens = win ? ' (ganan por penales)' : ' (pierden por penales)';
         }
-        if (pens) gf = ga = pick([0, 1, 1, 2]);
+        if (im) {
+          gf = im.gf;
+          ga = im.ga;
+        } else if (pens) gf = ga = pick([0, 1, 1, 2]);
         else if (res === 'w') {
           gf = pick([1, 1, 2, 2, 2, 3, 4]);
           ga = ri(0, gf - 1);
@@ -1670,6 +1728,8 @@
           myA = 0,
           parts = [];
         if (!gk) {
+          if (im) myG = im.g;
+          else
           for (let k = 0; k < gf; k++) {
             if (rnd() < clamp(lam / 1.6, 0.02, 0.7) * f) myG++;
             else if (rnd() < clamp(lamA / 1.6, 0.02, 0.5) * f) myA++;
@@ -1683,6 +1743,7 @@
           );
           parts.push(ri(1, 6) + ' atajadas');
         } else parts.push('sin minutos de peso');
+        if (im && !gk) s.g += myG; // los goles del partido que jugaste suman a tu temporada
         ct.pts += res === 'w' ? 3 : res === 'd' ? 1 : 0;
         ct.i++;
         let more = false,
@@ -1757,16 +1818,21 @@
           ko = nt.kind !== 'fr' && i >= 3,
           gk = g.pos === 'POR',
           pick = (a) => a[ri(0, a.length - 1)];
+        const im = g.imres;
+        g.imres = null;
         let res = sl.v,
           pens = '',
           gf,
           ga;
         if (res === 'd' && ko) {
-          const win = rnd() < clamp(0.5 + m.d / 50, 0.25, 0.75);
+          const win = im && im.pen != null ? im.pen : rnd() < clamp(0.5 + m.d / 50, 0.25, 0.75);
           res = win ? 'w' : 'l';
           pens = win ? ' (ganan por penales)' : ' (pierden por penales)';
         }
-        if (pens) {
+        if (im) {
+          gf = im.gf;
+          ga = im.ga;
+        } else if (pens) {
           gf = ga = pick([0, 1, 1, 2]);
         } else if (res === 'w') {
           gf = pick([1, 1, 2, 2, 2, 3, 4]);
@@ -1785,6 +1851,8 @@
           myA = 0,
           parts = [];
         if (!gk) {
+          if (im) myG = im.g;
+          else
           for (let k = 0; k < gf; k++) {
             if (rnd() < clamp(lam / 1.6, 0.02, 0.7) * f) myG++;
             else if (rnd() < clamp(lamA / 1.6, 0.02, 0.5) * f) myA++;
@@ -2209,7 +2277,7 @@
   }
 
   /* Crea una noticia. extra: no cuenta para el tope de 2 por temporada.
-  scout: suma interés de ojeadores (más chances en la ruleta de contratos).
+   scout: suma interés de ojeadores (más chances en la ruleta de contratos).
    trust: cambio de confianza del DT. */
   function pushNews(type, extra, year, v0, o) {
     const g = G,
@@ -2367,7 +2435,7 @@
     'España': {
       s: 'Trofeo Pichichi',
       a: 'Máximo asistidor de LaLiga',
-      m: 'Trofeo Alfredo Di Stéfano (mejor jugador de LaLiga)',
+      m: 'Trofeo Alfredo Di Stéfano (Mejor jugador de LaLiga)',
       y: 'Mejor jugador joven de LaLiga',
       k: 'Trofeo Zamora',
     },
@@ -2745,16 +2813,24 @@
     if (!c || c.idx != null) return null;
     const id = c.id,
       late = (st) => /Semifinal|Final/.test(st || '');
+    if (c.im) return null;
     if (['pot', 'ovr0', 'offers', 'aw', 'clasico'].includes(id)) return null;
     if (id === 'cm') return late(G.ct && G.ct.st[G.ct.i]) ? null : 'wheel';
     if (id === 'ntm') return late(G.nt && G.nt.st[G.nt.i]) ? null : 'wheel';
-    if (id === 'event' || id === 'train') return 'pick';
+    if (id === 'event' || id === 'train' || id === 'tech') return 'pick';
     if (id === 'penal') return 'penal';
     return 'wheel';
   }
 
   /* Elige solo el entrenamiento (la habilidad más baja) o la opción de un evento (al azar). */
   function autoPick(id) {
+    if (id === 'tech') {
+      const p = pendingTech();
+      G.tech[p.k + p.i] = p.o[ri(0, 1)];
+      G.qi++;
+      showStep();
+      return;
+    }
     if (id === 'train') {
       const sk = G.sk || {},
         cur = [sk.a, sk.b, sk.c, sk.d, G.stam, sk.e].map((v) => v || 0),
@@ -2871,6 +2947,14 @@
 
   function showStep() {
     if (G.qi >= G.queue.length) return afterQueue();
+    if (
+      G.phase === 'play' &&
+      !G.debut &&
+      G.queue[G.qi] !== 'tech' &&
+      G.queue[G.qi] !== 'offers' &&
+      pendingTech()
+    )
+      G.queue.splice(G.qi, 0, 'tech');
     const id = G.queue[G.qi];
     if (id === 'league') {
       G.rc = 1; // un reintento propio para la liga
@@ -2901,6 +2985,28 @@
         return showStep();
       }
     }
+    if (id === 'lm') {
+      if (G.pos === 'POR' || SET.sim || G.s.role === 'Lesión') {
+        G.qi++;
+        return showStep();
+      }
+      const pool = ALL.filter((x) => x.c === G.club.c && x.n !== G.club.n),
+        opp = pool[ri(0, pool.length - 1)],
+        d = (G.ovr - LV[G.club.t]) * 0.45 + (G.form || 0) * 1.5 + seasonPerf() * 4 - ri(-3, 3),
+        rp = { Figura: 0.97, Titular: 0.93, Rotación: 0.6, Suplente: 0.25 }[G.s.role];
+      G.lmm = { opp: opp.n, start: rnd() < (rp == null ? 0.5 : rp), d };
+      G.cur = {
+        id,
+        im: true,
+        t: `Partido decisivo · ${CMP[G.club.c][0]}`,
+        h: `${G.club.n} vs ${opp.n}, un partido que puede inclinar la temporada. ${G.lmm.start ? 'Sos titular.' : 'Arrancás desde el banco.'} Si ganás, el equipo llega mejor a la ruleta de la liga.`,
+        slots: [],
+        idx: null,
+        text: null,
+      };
+      save();
+      return;
+    }
     if (id === 'penal') {
       G.cur = {
         id,
@@ -2919,6 +3025,19 @@
     if (id === 'event') {
       const ev = EV[G.evi];
       G.cur = { id, t: ev.t, h: ev.x, slots: [], idx: null, text: null };
+      save();
+      return;
+    }
+    if (id === 'tech') {
+      const p = pendingTech();
+      G.cur = {
+        id,
+        t: '¡Nueva técnica!',
+        h: `Llegaste a ${trNames(false)[{ a: 0, b: 1, c: 2, d: 3 }[p.k]]} ${p.min}. Podés aprender una de estas dos técnicas. La elección es definitiva: la otra no se puede aprender, y eso hace único a tu jugador.`,
+        slots: [],
+        idx: null,
+        text: null,
+      };
       save();
       return;
     }
@@ -2959,12 +3078,26 @@
       idx: null,
       text: null,
     };
+    // Un partido de cada competición (el primero y la final) se juega en el modo interactivo.
+    if (!SET.sim && G.pos !== 'POR' && window.MatchMode) {
+      const o = id === 'cm' ? G.ct : id === 'ntm' && G.nt.kind !== 'fr' ? G.nt : null;
+      if (o && (!o.imd || o.st[o.i] === 'Final')) G.cur.im = true;
+    }
     save();
   }
 
   function pickEvent(i) {
     G.evc = i;
     G.queue.splice(G.qi + 1, 0, 'evres');
+    G.qi++;
+    showStep();
+    render();
+  }
+
+  function pickTech(i) {
+    const p = pendingTech();
+    if (!p || !p.o[i]) return;
+    G.tech[p.k + p.i] = p.o[i];
     G.qi++;
     showStep();
     render();
@@ -2984,11 +3117,27 @@
       sk = G.sk || {},
       cur = [sk.a, sk.b, sk.c, sk.d, G.stam, sk.e];
     return nm
-      .map(
-        (n, i) =>
-          `<article class="offer"><div><h4>${esc(n)} <span class="tag" style="background:var(--line);color:var(--ink)">${cur[i] || 0}</span></h4><p>${TRH[gk ? 1 : 0][i]}</p></div><button class="btn small" type="button" data-tr="${i}">Entrenar</button></article>`,
-      )
+      .map((n, i) => {
+        const tk = gk ? null : ['a', 'b', 'c', 'd'][i],
+          nx = tk && TTREE[tk].find((t) => (sk[tk] || 0) < t.min),
+          hint = nx
+            ? `<p class="nxt">Nivel ${nx.min}: elegís ${TECH[nx.o[0]][0]} o ${TECH[nx.o[1]][0]}</p>`
+            : '';
+        return `<article class="offer"><div><h4>${esc(n)} <span class="tag" style="background:var(--line);color:var(--ink)">${cur[i] || 0}</span></h4><p>${TRH[gk ? 1 : 0][i]}</p>${hint}</div><button class="btn small" type="button" data-tr="${i}">Entrenar</button></article>`;
+      })
       .join('');
+  }
+
+  function techHTML() {
+    const p = pendingTech();
+    return p
+      ? p.o
+          .map(
+            (id, i) =>
+              `<article class="offer"><div><h4>${esc(TECH[id][0])}</h4><p>${esc(TECH[id][1])}</p></div><button class="btn small" type="button" data-tech="${i}">Aprender</button></article>`,
+          )
+          .join('')
+      : '';
   }
 
   /* Pasos que pertenecen a una competición (tienen su reintento propio). */
@@ -2996,17 +3145,26 @@
   const isMiniId = (id) => id === 'clasico' || id === 'penal';
 
   /* Dos tipos de reintento:
-     - rc: el de la competición (liga, cada copa, cada torneo de selección). Se usa solo en esa
-       competición y se renueva en la siguiente.
-     - rs: el comodín de la temporada. Sirve para lo que quieras: cualquier ruleta, un premio
+    - rc: el de la competición (liga, cada copa, cada torneo de selección). Se usa solo en esa
+      competición y se renueva en la siguiente.
+    - rs: el comodín de la temporada. Sirve para lo que quieras: cualquier ruleta, un premio
        individual o repetir un penal o un tiro libre. */
   function retry() {
     const c = G.cur;
-    if (!c || c.idx == null || spinning || !c.snap || c.id === 'event' || c.id === 'train') return;
+    if (!c || c.idx == null || spinning || !c.snap || c.id === 'event' || c.id === 'train' || c.id === 'tech') return;
     const useC = isCompStep(c.id) && G.rc > 0;
     if (!useC && !(G.rs > 0)) return;
-    const mini = isMiniId(c.id);
-    const keep = { id: c.id, t: c.t, h: c.h, slots: c.slots, idx: null, text: null, snap: null };
+    const mini = isMiniId(c.id) || c.im;
+    const keep = {
+      id: c.id,
+      im: c.im,
+      t: c.t,
+      h: c.h,
+      slots: c.slots,
+      idx: null,
+      text: null,
+      snap: null,
+    };
     G = JSON.parse(c.snap);
     if (useC) G.rc = 0;
     else G.rs = 0;
@@ -3019,6 +3177,69 @@
       renderGame();
       spin();
     }
+  }
+
+  /* ---------- partido interactivo (match.js) ---------- */
+  let mxBusy = false;
+  async function playMatch() {
+    const c = G && G.cur;
+    if (!c || !c.im || c.idx != null || mxBusy || !window.MatchMode) return;
+    mxBusy = true;
+    let m, home, ko;
+    if (c.id === 'cm') {
+      m = G.ct.m;
+      home = G.club.n;
+      ko = G.ct.kind === 'cup' || G.ct.i >= 3;
+    } else if (c.id === 'ntm') {
+      m = G.nt.m;
+      home = G.nat;
+      ko = G.nt.kind !== 'fr' && G.nt.i >= 3;
+    } else {
+      m = G.lmm;
+      home = G.club.n;
+      ko = false;
+    }
+    // Tus números del partido salen de tu media y de tus habilidades (0 a 10).
+    const sk = G.sk || {},
+      b = (G.ovr || 60) - 8,
+      adj = { DEL: { fin: 4 }, MED: { pas: 4 }, DEF: { dfn: 6 } }[G.pos] || {},
+      stat = (v, k) => Math.round(clamp(b + v * 2.2 + (adj[k] || 0), 40, 99)),
+      rolP = { Figura: 0.65, Titular: 0.5, Rotación: 0.4, Suplente: 0.25 }[G.s.role] || 0.45;
+    let r;
+    try {
+      r = await window.MatchMode.play({
+        home,
+        away: m.opp,
+        kind: ko ? 'ko' : 'lg',
+        pos: G.pos,
+        dors: { DEL: 9, MED: 8, DEF: 4 }[G.pos] || 10,
+        stats: { reg: stat(sk.c || 0, 'reg'), pas: stat(sk.b || 0, 'pas'), fin: stat(sk.a || 0, 'fin'), dfn: stat(sk.d || 0, 'dfn') },
+        skills: Object.values(G.tech || {}),
+        pSit: m.start ? rolP : 0.2,
+        rb: clamp(70 - m.d * 0.55, 48, 88),
+        gk: Math.round(clamp(70 - m.d * 0.4, 50, 90)),
+      });
+    } finally {
+      mxBusy = false;
+    }
+    const v = r.pen != null ? 'd' : r.me > r.rv ? 'w' : r.me < r.rv ? 'l' : 'd';
+    {
+      const { cur, ...rest } = G;
+      c.snap = JSON.stringify(rest);
+    }
+    if (c.id === 'cm') G.ct.imd = true;
+    if (c.id === 'ntm') G.nt.imd = true;
+    G.imres = { gf: r.me, ga: r.rv, g: r.g, pen: r.pen };
+    const sl = (c.slots || []).find((x) => x.v === v) || { v };
+    c.idx = Math.max(0, (c.slots || []).indexOf(sl));
+    const tb = G.trophies.length;
+    c.text = apply(c.id, sl);
+    newsAfter(c.id, sl, tb);
+    if ((c.slots || []).length)
+      rot = -(sliceStart(c.slots, c.idx) + (0.2 + rnd() * 0.6) * slotP(c.slots, c.idx) * TP);
+    hi = c.idx;
+    save();
+    render();
   }
 
   function afterQueue() {
@@ -3121,6 +3342,7 @@
       evc: null,
       lastRole: '',
       sk: { a: 0, b: 0, c: 0 },
+      tech: {},
       trophies: [],
       caps: 0,
       ntg: 0,
@@ -3867,11 +4089,11 @@
       return;
     }
     const mini = isMiniId(c.id),
-      noRs = c.id === 'event' || c.id === 'train',
+      noRs = c.id === 'event' || c.id === 'train' || c.id === 'tech',
       comp = isCompStep(c.id),
       useC = comp && G.rc > 0,
       canRetry = c.idx != null && !spinning && !noRs && (useC || G.rs > 0);
-    b.hidden = c.id === 'event' || c.id === 'train' || (mini && c.idx == null);
+    b.hidden = c.id === 'event' || c.id === 'train' || c.id === 'tech' || (mini && c.idx == null);
     b.disabled = spinning;
     $('#b-retry').hidden = !canRetry;
     $('#b-retry').textContent = mini
@@ -3885,7 +4107,7 @@
         ? `Reintento de ${G.rcn || 'la competición'}: ${G.rc > 0 ? '1 disponible' : 'usado'}. `
         : '') +
       `Comodín de la temporada: ${G.rs > 0 ? '1 disponible' : 'usado'}${comp ? '' : ' (sirve para repetir una ruleta, un premio, un penal o un tiro libre)'}.`;
-    if (c.idx == null) b.textContent = 'Girar la ruleta';
+    if (c.idx == null) b.textContent = c.im ? 'Jugar el partido' : 'Girar la ruleta';
     else
       b.textContent =
         c.id === 'offers'
@@ -3908,17 +4130,18 @@
     $('#st-eyebrow').textContent = G.debut
       ? 'Debut · 16 años'
       : `Temporada ${G.season} · ${seasonLabel(G.year)}`;
-    const isEv = c.id === 'event' || c.id === 'train',
+    const isEv = c.id === 'event' || c.id === 'train' || c.id === 'tech',
       isMini = (c.id === 'clasico' || c.id === 'penal') && G.phase !== 'choose',
       choosing = G.phase === 'choose';
-    $('#wheel-wrap').hidden = choosing || isEv || isMini;
+    const isIM = !choosing && (c.id === 'lm' || (c.im && c.idx == null));
+    $('#wheel-wrap').hidden = choosing || isEv || isMini || isIM;
     $('#offers').hidden = !(choosing || isEv);
     $('#mini-wrap').hidden = !isMini;
     $('#p-extra').hidden = G.debut;
     const N = SKN[G.pos === 'POR' ? 1 : 0],
       sk = G.sk || { a: 0, b: 0, c: 0, d: 0, e: 0 };
     $('#p-extra').textContent = `Confianza del DT ${G.trust || 0} · Resistencia ${G.stam || 0}
-${N[0]} ${sk.a || 0} · ${N[1]} ${sk.b || 0} · ${N[2]} ${sk.c || 0} · ${N[3]} ${sk.d || 0} · ${N[4]} ${sk.e || 0}`;
+${N[0]} ${sk.a || 0} · ${N[1]} ${sk.b || 0} · ${N[2]} ${sk.c || 0} · ${N[3]} ${sk.d || 0} · ${N[4]} ${sk.e || 0}${techList().length ? '\nTécnicas: ' + techList().join(' · ') : ''}`;
     const hasV = (G.trophies || []).length > 0;
     $('#vit').hidden = !hasV;
     if (hasV) $('#vit-list').innerHTML = vitHTML();
@@ -3930,14 +4153,21 @@ ${N[0]} ${sk.a || 0} · ${N[1]} ${sk.b || 0} · ${N[2]} ${sk.c || 0} · ${N[3]} 
       $('#st-hint').textContent = c.h;
       $('#result').textContent = '';
       $('#offers').innerHTML =
-        c.id === 'train'
-          ? trainHTML()
-          : EV[G.evi].c
+        c.id === 'tech'
+          ? techHTML()
+          : c.id === 'train'
+            ? trainHTML()
+            : EV[G.evi].c
               .map(
                 (o, i) =>
                   `<article class="offer"><div><h4>${esc(o[0])}</h4><p>${esc(o[1])}</p></div><button class="btn small" type="button" data-ev="${i}">Elegir</button></article>`,
               )
               .join('');
+    } else if (isIM) {
+      $('#st-title').textContent = c.t;
+      $('#st-hint').textContent = c.h;
+      $('#result').textContent = c.text || '';
+      $('#result').classList.add('long');
     } else if (isMini) {
       $('#st-title').textContent = c.t;
       $('#st-hint').textContent = c.h;
@@ -4103,8 +4333,10 @@ ${N[0]} ${sk.a || 0} · ${N[1]} ${sk.b || 0} · ${N[2]} ${sk.c || 0} · ${N[3]} 
 
   /* ---------- eventos ---------- */
   $('#b-main').onclick = () => {
-    if (G.cur.idx == null) spin();
-    else next();
+    if (G.cur.idx == null) {
+      if (G.cur.im) playMatch();
+      else spin();
+    } else next();
   };
   $('#news-close').onclick = closeNews;
   document.addEventListener('keydown', (e) => {
@@ -4120,7 +4352,9 @@ ${N[0]} ${sk.a || 0} · ${N[1]} ${sk.b || 0} · ${N[2]} ${sk.c || 0} · ${N[3]} 
     const v = e.target.closest('button[data-ev]');
     if (v) return pickEvent(+v.dataset.ev);
     const t = e.target.closest('button[data-tr]');
-    if (t) pickTrain(+t.dataset.tr);
+    if (t) return pickTrain(+t.dataset.tr);
+    const h = e.target.closest('button[data-tech]');
+    if (h) pickTech(+h.dataset.tech);
   });
   $('#b-retry').onclick = retry;
   $('#t-new').onclick = () => ask('¿Empezar una carrera nueva? Se pierde la actual.', resetAll);
@@ -4149,7 +4383,7 @@ ${N[0]} ${sk.a || 0} · ${N[1]} ${sk.b || 0} · ${N[2]} ${sk.c || 0} · ${N[3]} 
   function syncTools() {
     $('#t-sound').textContent = 'Sonido: ' + (SET.sound ? 'sí' : 'no');
     $('#t-sound').setAttribute('aria-pressed', SET.sound);
-    $('#t-fast').textContent = 'Modo: ' + (SET.sim ? 'simular temporada' : 'carrera normal');
+    $('#t-fast').textContent = 'Modo: ' + (SET.sim ? 'Simular Temporada' : 'Carrera Normal');
     $('#t-fast').setAttribute('aria-pressed', SET.sim);
   }
   $('#t-sound').onclick = () => {

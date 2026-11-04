@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Ruleta Futbolística</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;600&family=Big+Shoulders+Display:wght@800&family=Playfair+Display:wght@700;900&family=Source+Serif+4:wght@400;600&display=swap">
-<link rel="stylesheet" href="styles.css?v=7">
+<link rel="stylesheet" href="styles.css?v=9">
 <link rel="icon" href="./media/icon.png">
 </head>
 <body>
@@ -113,6 +113,26 @@
     <textarea id="e-text" readonly rows="8" hidden aria-label="Resumen de la carrera"></textarea>
   </section>
 </div>
-<script src="game.js?v=7"></script>
+<div id="mx" hidden>
+  <div class="mxin">
+    <div class="hud"><div class="rb l"><span id="x-hA"></span></div><div class="sc" id="x-score">0 - 0</div><div class="rb r"><span id="x-hB"></span></div><div class="mn" id="x-mn"></div></div>
+    <div class="fw">
+      <canvas id="x-field"></canvas>
+      <button id="x-logbtn" type="button" aria-label="Registro del partido">☰</button>
+      <ol id="x-log" hidden></ol>
+      <div id="x-cTU" class="corner" hidden></div>
+      <div id="x-cRV" class="corner" hidden></div>
+      <div id="x-banner"></div>
+      <div id="x-hint"></div>
+      <div id="x-dbar" hidden><span id="x-dTx"></span><div class="trk"><div class="zone mid" id="x-dM"></div><div class="zone" id="x-dG"></div><div class="mk" id="x-dMk"></div></div></div>
+      <div id="x-meter" hidden><span id="x-mTxt"></span><div class="trk" style="background:rgba(239,106,85,.35)"><div class="zone" id="x-mZone"></div><div class="mk" id="x-mMk"></div></div></div>
+      <div id="x-overlay" hidden><div id="x-wTitle"></div><div class="ptr"></div><canvas id="x-wheel"></canvas><button class="btn" id="x-wGo" type="button">Girar</button></div>
+      <div id="x-end" hidden><h2 id="x-endT" style="font:800 40px/1 var(--f-display);text-transform:uppercase"></h2><p id="x-endP" class="note"></p><button class="btn" id="x-again" type="button">Continuar</button></div>
+    </div>
+    <div class="ctrl"><button class="cb" id="x-bL" type="button" disabled></button><button class="cb c empty" id="x-bC" type="button" disabled aria-label="Técnicas"><svg viewBox="0 0 24 32" aria-hidden="true"><path d="M14 0 L1 18 H9.5 L7.5 32 L23 12 H14.5 Z" fill="currentColor"/></svg></button><button class="cb" id="x-bR" type="button" disabled></button><div id="x-menu" hidden></div></div>
+  </div>
+</div>
+<script src="match.js?v=9"></script>
+<script src="game.js?v=9"></script>
 </body>
 </html>
